@@ -1,0 +1,54 @@
+% !TEX encoding = UTF-8
+% !TEX TS-program = pdflatex
+% !TEX root = ../tesi.tex
+
+%**************************************************************
+\chapter{Gradle}
+\label{app:gradle}
+%**************************************************************
+
+\section{build.gradle}
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,tabsize=2]
+	plugins {
+  	id 'antlr'
+    id 'java'
+	}
+
+	group 'org.example'
+	version '1.0-SNAPSHOT'
+
+	repositories {
+			mavenCentral()
+	}
+
+	dependencies {
+			implementation 'com.google.code.gson:gson:2.10.1'
+			implementation 'org.iq80.leveldb:leveldb-api:0.9'
+			implementation 'org.iq80.leveldb:leveldb:0.9'
+
+			implementation 'org.antlr:antlr4-runtime:4.10'
+			antlr 'org.antlr:antlr4:4.10'
+
+			testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+			testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+	}
+
+	test {
+			useJUnitPlatform()
+	}
+
+	jar {
+			manifest {
+					attributes "Main-Class": "Main"
+			}
+
+			from {
+					configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+			}
+	}
+
+	generateGrammarSource {
+			maxHeapSize = "64m"
+			arguments += ["-visitor"]
+	}
+\end{Verbatim}

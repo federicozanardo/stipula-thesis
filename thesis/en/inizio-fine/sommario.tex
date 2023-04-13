@@ -1,0 +1,42 @@
+% !TEX encoding = UTF-8
+% !TEX TS-program = pdflatex
+% !TEX root = ../tesi.tex
+
+%**************************************************************
+% Sommario
+%**************************************************************
+\cleardoublepage
+\phantomsection
+\pdfbookmark{Sommario}{Sommario}
+\begingroup
+\let\clearpage\relax
+\let\cleardoublepage\relax
+\let\cleardoublepage\relax
+
+\chapter*{Abstract}
+
+The purpose of this thesis is to provide a possible implementation of the domain-specific language 
+\textit{Stipula}. The purpose of this language is to assist professionals such as lawyers in programming 
+\textit{legal contracts}. The language is based on a set of programming abstractions that correspond to the 
+distinctive elements that make up a legal contract, namely, permissions, prohibitions, obligations, asset 
+transfer, and openness to external context, and that is likely to be executed on both centralized and 
+distributed systems.\\
+The unique characteristics of the language have strongly driven the implementation of a particular 
+architecture, which is a solution obtained from a combination of different approaches present in the 
+current blockchain context.\\
+In parallel with the development of a contract execution system, the aim of the project is also to provide 
+secure mechanisms for \textit{asset transfer}, to ensure that the transferred sum is not altered during 
+the sending and receiving of a transaction, and avoid attacks such as \textit{double-spending}.\\
+The implementation illustrated in this thesis is the first version that provides the general idea of the 
+project, oriented towards the execution in different types of distributed systems, ranging from a simple 
+client-server system to a network of replicated partially trusted nodes. To illustrate the implementation, 
+the thesis fully discusses the case of non-trivial contracts such as the trading of assets and the rent of 
+a bike. The final part of the paper presents the missing functionalities, addresses the current limits of 
+the version presented, possible solutions proposed, and possible future developments of the project are 
+introduced. In particular, for this last point, future developments are understood as evolutions from the 
+point of view of security, usability, computation, and efficiency for the execution of legal contracts in 
+distributed systems.
+
+\endgroup			
+
+\vfill

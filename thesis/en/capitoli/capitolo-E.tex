@@ -1,0 +1,63 @@
+% !TEX encoding = UTF-8
+% !TEX TS-program = pdflatex
+% !TEX root = ../tesi.tex
+
+%**************************************************************
+\chapter{Docker}
+\label{app:docker}
+%**************************************************************
+
+\section{Dockerfile}
+
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,tabsize=2]
+	# Setup Gradle
+	FROM gradle:7.6.0-jdk8 AS TEMP_BUILD_IMAGE
+	ENV APP_HOME=/usr/app
+	WORKDIR $APP_HOME
+	COPY build.gradle settings.gradle $APP_HOME
+	
+	COPY gradle $APP_HOME/gradle
+	COPY --chown=gradle:gradle . /home/gradle/src
+	USER root
+	RUN chown -R gradle /home/gradle/src
+	
+	RUN gradle build || return 0
+	COPY . .
+	RUN gradle clean build
+	
+	# Setup Java
+	FROM amazoncorretto:8
+	ENV ARTIFACT_NAME=stipula-node-1.0-SNAPSHOT.jar
+	ENV APP_HOME=/usr/app
+	
+	WORKDIR $APP_HOME
+	COPY --from=TEMP_BUILD_IMAGE $APP_HOME/build/libs/$ARTIFACT_NAME .
+	
+	# Run
+	EXPOSE 8080
+	ENTRYPOINT exec java -jar ${ARTIFACT_NAME}
+\end{Verbatim}
+
+\newpage
+\section{docker-compose.yml}
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,tabsize=2]
+	version: "3.3"
+	services:
+		node:
+			container_name: "stipula-node"
+			image: stipula-node:v0.4.2
+			ports:
+				- 127.0.0.1:8080:8080
+				- 127.0.0.1:61000:61000
+			volumes:
+				- stipula-storage:/usr/app/storage/
+			environment:
+				- SEED=no
+
+	volumes:
+		stipula-storage:
+\end{Verbatim}
+
+If you don't want to manually build the Docker image, you can replace line 5 with 
+\verb|image: "ghcr.io/federicozanardo/stipula-node:v0.4.2"|, this will download a specific 
+image from a specific GitHub page \autocite{site:stipula-github-available-packages}.

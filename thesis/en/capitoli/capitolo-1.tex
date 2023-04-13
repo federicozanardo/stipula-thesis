@@ -1,0 +1,247 @@
+% !TEX encoding = UTF-8
+% !TEX TS-program = pdflatex
+% !TEX root = ../tesi.tex
+
+%**************************************************************
+\chapter{Introduction}
+\label{cap:introduction}
+%**************************************************************.
+
+This chapter introduces the general problem of the thesis, the technologies used for the development of 
+the proposed solution and the structure of the document.
+
+%**************************************************************
+
+\section{Context}
+
+The digital revolution is having a significant impact on the \textit{legal domain}, and one of the main 
+challenges in dealing with legal documents is their complexity. \textit{Legal contracts}, which give rise 
+to a binding legal relationship, are a specific subset of legal documents that are the focus of this 
+research. The principle of \textit{freedom of form} in contractual law allows parties to express their 
+agreement using any language or medium, including programming languages. This creates a need for high-level 
+programming languages that are \textit{easy for non-experts to understand}, as genuine agreement can only 
+be reached if the parties are aware of the computational effects of their code. The researchers propose a 
+new domain-specific language called \textbf{Stipula} (\cite{article:stipula-dsl} and 
+\cite{article:pacta-sunt-servanda}), which uses concise and intelligible primitives that have precise 
+correspondence with the distinctive elements of legal contracts. \textit{Stipula} is based on the theory of 
+concurrency in computer science, which provides a rich toolset of formal techniques to verify the 
+properties and correctness of software contracts. 
+
+\section{Aim of the thesis}
+
+The language definition of \textit{Stipula} is \textit{implementation-agnostic} and can be either 
+implemented as a centralized platform or run on top of a distributed system like a blockchain. 
+Building a distributed system for managing and executing legal contracts involves the design and 
+development of several very complex components. The \textit{Stipula} language guarantees non-trivial 
+primitives for the execution of a contract, such as the \textit{automatic execution} of some parts of a 
+contract and the secure transfer of assets between actors and contracts. The \textit{scheduling} of an 
+automatic execution of some parts of a contract when certain conditions are met is not a feature offered 
+by other languages. For the legal context, however, this represents an important feature for the 
+implementation of compliance with some \textit{obligations} of a contract, which, if not respected, trigger 
+\textit{penalties} for one or more parties to the contract same. The \textit{secure transfer} of assets 
+is a subject that is treated in different languages and there are different approaches to guarantee the 
+fundamental properties for the transfer of assets, such as avoiding the possibility of 
+\textit{double-spending}, avoiding the generation of a quantity or lose an amount of assets during a 
+transfer. Furthermore, different blockchains use different representations for the implementation and 
+management of assets within their network and this is certainly one of the most delicate and important 
+aspects to take into consideration when designing a language that allows writing contracts with value 
+legal.
+
+The idea of the \textit{Stipula} language comes from the languages present in the blockchain context, 
+proposing new primitives useful for creating legal contracts. However, a distributed system for executing 
+\textit{Stipula} contracts can in turn be based on another distributed system, such as a blockchain. The 
+idea behind the implementation of the \textit{Stipula} language is to \textit{separate} the contract 
+execution layer from the information storage layer. In doing so, the blockchain is used as a secure 
+ledger in which to store the information produced by the upper layer that is in charge of executing 
+\textit{Stipula} contracts. This separation allows you to leave out a whole series of issues that are delegated to the lower layer (such as the immutable archiving of information), and to concentrate on providing functions dedicated to the drafting and execution of legal contracts.
+
+As with blockchains like Ethereum, the execution of a smart contract requires the \textit{consent} of the 
+network in order to validate the result obtained. Consensus is one of the most complex aspects of 
+distributed systems, as it requires the nodes of a network to agree on a particular result of a 
+computation. This theme involves different aspects such as the communication of the nodes. In fact, there 
+must be protocols that allow the nodes to communicate effectively and efficiently, both information 
+necessary for maintaining the network (i.e., node discovery) and the information to be submitted for 
+consent (the results obtained from the execution of a smart contract). In particular, achieving consensus 
+in a distributed system is a complex task as it involves several considerations. Firstly, the system must 
+be able to \textit{tolerate} node errors, message losses, network partitions, and other failures while 
+ensuring consistency and correctness (\textit{fault tolerance}). Secondly, \textit{scalability} is crucial 
+as the number of nodes in the system increases. The consensus protocol must adapt to the growing number of 
+nodes to avoid bottlenecks and delays. Finally, \textit{security} is also paramount as the consensus 
+protocol should prevent malicious actors from compromising the system. Attackers may try to manipulate 
+messages, disrupt communication, or impersonate other nodes to compromise the integrity of the system.
+
+Furthermore, in a distributed context, aspects such as performance and computational resources are very 
+important requirements to take into consideration. Requiring the execution of nodes with high computational 
+and memory capacities would not help distribute the network as the management and maintenance costs of 
+these nodes can only be supported by a limited number of entities. Therefore, the implementation must take 
+into account:
+\begin{enumerate}
+	\item Store as little information as possible, ensuring the correct execution of contracts and asset 
+	transfers;
+	\item Minimize the computational resources required: an implementation that can also be performed on 
+	devices with a low computational capacity allows to increase the distribution of the network. However, 
+	this point collides with the peculiar features required by the language. Therefore, compromises need to 
+	be found.
+\end{enumerate}
+As far as computation is concerned, a point that can help to minimize the demand for computational 
+resources is to opt for a \textit{compilation} of the language instead of carrying out a pure 
+\textit{interpretation}. Compiling the language will certainly take more time when you upload a contract to 
+the network. However, when the contract has to be performed, the original contract will not be performed, 
+but its compiled will be performed, obtaining an increase in performance compared to performing the 
+interpretation of the original contract each time.
+
+The thesis work took into consideration both the aspects strictly related to language and the aspects 
+related to distribution. Indeed, the design phase took into account the need for specific components for 
+the implementation of a distributed system. The realized architecture implements all the most important 
+features of the \textit{Stipula} language, such as:
+\begin{enumerate}
+	\item Management of the agreement between the parties to start a new contract
+	\item Management of the progress of a contract
+	\item The secure transfer of assets between actors and contracts
+	\item The management of the execution of specific parts of the contract for the implementation of 
+	penalties, if the conditions arise
+	\item Management of judicial enforcement and exceptional behavior
+\end{enumerate}
+The most interesting and most complex parts of the architecture involve the \textbf{compiler}, the 
+\textbf{virtual machine} and the development of a \textbf{bytecode language} and \textbf{asset management}.
+
+Precisely to try to obtain better performance in the execution phase of the contracts, the design required 
+the development of a compiler, which could translate the contract in \textit{Stipula} into a target 
+language suitable for execution on a protected environment (a virtual machine). Therefore, a language 
+called \textbf{Stipula bytecode} was designed, and represents the output produced by the compiler. By 
+doing so, it is possible to carry out the compilation phase once only when the contract is loaded into the 
+distributed platform. Every time you want to execute a contract, a specific virtual machine will execute 
+the compile written in \textit{Stipula bytecode}. Compiler development tries to do as many static checks 
+as can be done. Since the \textit{Stipula} language is an \textbf{untyped} language, the compiler also 
+performs \textit{type inference}. This task is not always successful and it may happen that in certain 
+situations the compiler is not able to determine the type of a variable. Therefore, a syntax was developed 
+in \textit{Stipula bytecode} that allows you to notify the virtual machine to perform a 
+\textit{runtime type check}.
+
+The \textit{Stipula bytecode language} is a language designed to run on a 
+\textbf{stack-based virtual machine}, that is, the variables of the program are loaded on a stack and the 
+\textit{Stipula bytecode} language operates on that stack by removing or adding elements. The 
+\textit{Stipula bytecode} language has the same expressiveness as the \textit{Stipula} language. The 
+advantage of using this bytecode language is the ease of executing a contract, as a program written in 
+bytecode directly contains the instructions that allow it to operate on the stack and do not require a 
+further interpretation step. Unlike the \textit{Stipula} language, the bytecode language allows 
+\textbf{types} for variables and also takes into account the presence of variables without a specific 
+type, precisely because of the untyped behavior of the \textit{Stipula} language.
+
+The \textit{virtual machine} represents one of the most interesting and complex modules of the whole 
+architecture. This component takes care of:
+\begin{enumerate}
+	\item Execute contracts written in Stipula bytecode;
+	\item Manage asset transfers between users and contracts;
+	\item Manage the scheduling of events for the automatic execution of certain obligations;
+	\item Manage the opening of new contracts and the progress of the same.
+\end{enumerate}
+
+The first activity that the virtual machine has to manage is the opening of a contract which corresponds 
+from a legal point of view to the \textit{agreement of minds} between two or more actors. Therefore, it is 
+necessary for this component to correctly manage the communication between the actors to make sure that 
+everyone is in agreement on opening a new contract. The main job of the virtual machine is to execute a 
+contract and ensure that the execution is done in a precise state of the contract, as well as ensuring that 
+the caller matches the correct participant of the contract and checks on the input parameters for the 
+execution of the contract. In addition to this, the virtual machine manages all the event 
+\textit{scheduling} mechanism for the automatic execution of \textit{obligations}: this process starts from 
+the execution of a contract which invoked the creation of a \textit{penalty}, in case a participant does 
+not respect the agreements stipulated at the opening of the contract, and proceeds with the control of 
+certain conditions at a precise moment. If the conditions for applying the penalty exist, the virtual 
+machine will execute a specific portion of code that encodes the obligation, otherwise the virtual machine 
+will avoid applying the penalty. Another very important aspect of the virtual machine is the management of 
+\textbf{asset transfers}. In fact, all asset transfers to a contract are verified by the virtual machine, 
+which ensures:
+\begin{enumerate}
+	\item To receive the right amount of assets established by the contract;
+	\item To check that during the transfer of a certain amount of assets, no amount of assets is generated 
+	or lost in the void;
+	\item To check that the funds received actually belong to the rightful owner;
+	\item To check that the user who wants to make a payment is not attempting to carry out a 
+	\textbf{double-spending} attack on the system.
+\end{enumerate}
+Conversely, when a contract makes a payment to a user, the machine must ensure that an unexpected amount 
+of assets is not lost or generated out of thin air during the transfer.
+
+\textit{Asset management} is one of the most delicate aspects of architecture. Asset transfers directly 
+between users and other users are not permitted, but all transfers must be by way of a contract. In the 
+thesis an example will be illustrated which will illustrate how two actors can exchange two assets by 
+means of a contract (\ref{asset-swap}). The reason is that this would have defeated the purpose of 
+\textit{Stipula} for certain applications, so a transfer can be:
+\begin{enumerate}
+	\item \textit{Pay-to-Contract}: it is a transfer that takes place from a participant of the contract 
+	to a contract;
+	\item \textit{Pay-to-Party}: it is a transfer that takes place from a contract to a participant in the 
+	contract.
+\end{enumerate}
+In order to be able to transfer assets, it is necessary to decide which \textbf{asset representation model} 
+to adopt. Currently, there are two models in the blockchain context: the 
+\textbf{account-balance-based model} and the \textbf{UTXO model} (\textit{Unspent Transaction Output}). The 
+account-balance-based model, used for example by Ethereum, is the simplest model from a conceptual and 
+implementation point of view. In this model, each user (represented by an alphanumeric address) is 
+associated with the \textit{balance} of a specific asset. Each time a transaction is made, the balance of 
+the asset is updated. This model has severe limitations from the point of view of \textit{performance}, as 
+it does not allow the parallel execution of several transactions, and from the point of view of 
+\textit{privacy}, as in this model it is very easy to trace the funds associated with the users. The model 
+used for the implemented architecture has been defined \textbf{single-use-seal}, and is a simplified version 
+of the UTXO model used by Bitcoin. This model is more complex from a conceptual and implementation point of 
+view but allows to obtain performance and privacy advantages, as well as 
+\textit{partially mitigating the double-spending} attack by its nature. A single-use-seal can be seen as a 
+box that contains a certain amount of assets and is sealed by a single-use seal, which can only be broken 
+by the owner of that amount of assets. To execute a transaction against a contract, the owner must break 
+the seal, in order to allow the contract to withdraw the required funds. This seal can only be broken by 
+the owner who is able to provide \textbf{cryptographic proof of ownership} of the asset amount. By doing 
+so, a contract to withdraw funds directly from a user's wallet is denied, as happens in Ethereum. The 
+cryptographic proof that allows to break the seal consists of a program written in a language called 
+\textbf{Script} \autocite{book:mastering-bitcoin}. In particular, a single-use-seal is \textbf{locked} by 
+a program written in \textbf{Script}, defined as \verb|lockScript|. The cryptographic proof that the user 
+must provide to prove that he is the actual owner of the funds is a program written in Script, defined as 
+\verb|unlockScript|. The latter program is the one that allows you to unlock the \verb|lockScript| script 
+and consequently the funds contained in the seal. This \textit{Script} language is a very similar 
+language to the \textit{Stipula bytecode} language and therefore programs written in \textit{Script} can 
+be executed in a virtual machine similar to the one for \textit{Stipula bytecode}. Unlike the bytecode 
+language, the \textit{Script} language has a different and separate set of instructions from that of 
+\textit{Stipula bytecode}.
+
+The seal is defined \textit{single-use} because it can only be used once for an asset transfer, after 
+which it is destroyed and can no longer be used by the user for other transfers. Instead, when a contract 
+needs to make a \textit{Pay-to-Party}, it creates new single-use-seals to be sent to one or more users.
+
+\section{Personal motivations}
+
+I attended several artificial intelligence courses during my master's degree. I was very fascinated by it, 
+however I sensed that perhaps it is not the right career path for me. For the oral exam of the course 
+\textit{Advanced Topics in Programming Languages}, held by Professor Silvia Crafa, I had the opportunity to 
+analyze distributed systems and in particular the blockchain field. I was introduced to the research 
+project concerning the development of a programming language aimed at the creation of legal contracts: 
+\textit{Stipula}. I accepted the proposal to carry out a thesis work on this topic as it allowed me to 
+analyze and deal with several separate topics, such as distributed systems, the analysis and implementation 
+of a programming language, computation and cryptography. I was very enthusiastic about this project and I 
+am passionate about studying distributed systems and finding solutions that are inspired by currently 
+existing systems, but adapting them in a different key for this project.
+
+\section{Document structure}
+
+Illustrate the structure of the document:
+\begin{description}
+	\item[{\hyperref[cap:stipula]{The second chapter}}] introduces the context of application of this 
+	language and all the main aspects of the language.
+	
+	\item[{\hyperref[cap:general-design]{The third chapter}}] describes the proposed solution for the 
+	language implementation, focusing on asset management and the components needed for the general 
+	architecture. Furthermore, the implementation is contextualized in a distributed system, and therefore 
+	specifying all the modules necessary to operate in a similar context.
+	
+	\item[{\hyperref[cap:implementation]{The fourth chapter}}] describes the design and implementation of the 
+	architecture. All the modules that make up the architecture and the interactions between them are 
+	explained. In addition, examples of contract execution will be illustrated.
+	
+	\item[{\hyperref[cap:future-developments]{The fifth chapter}}] describes the missing features to have a 
+	complete implementation of the language. Furthermore, the limits of the implemented architecture are 
+	presented, the possible optimizations that can be applied to it to increase the performance and future 
+	developments of the project in its entirety.
+	
+	\item[{\hyperref[cap:conclusions]{The sixth chapter}}] provides a brief summary emphasizing the 
+	complexity of the design, both for the implemented architecture and for future developments, and of the 
+	problems faced.
+\end{description}

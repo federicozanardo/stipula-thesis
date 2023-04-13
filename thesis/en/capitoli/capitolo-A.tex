@@ -1,0 +1,1345 @@
+% !TEX encoding = UTF-8
+% !TEX TS-program = pdflatex
+% !TEX root = ../tesi.tex
+
+%**************************************************************
+\chapter{Examples of contracts and execution of contracts}
+\label{app:examples}
+%**************************************************************
+
+\section{Asset swap}
+
+\subsection{Complete code}
+\label{app:asset-swap-complete-code}
+
+The complete code of the contract written in \textit{Stipula} is the following:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,tabsize=2]
+  stipula SwapAsset {
+    asset assetA:stipula_assetA_ed8i9wk, assetB:stipula_assetB_pl1n5cc
+    field amountAssetA, amountAssetB
+    init Inactive
+
+    agreement (Alice, Bob)(amountAssetA, amountAssetB) {
+        Alice, Bob: amountAssetA, amountAssetB
+    } ==> @Inactive
+
+    @Inactive Alice : depositAssetA()[y]
+        (y == amountAssetA) {
+            y -o assetA;
+            _
+    } ==> @Swap
+
+    @Swap Bob : depositAssetBAndSwap()[y]
+        (y == amountAssetB) {
+            y -o assetB
+            assetB -o Alice
+            assetA -o Bob;
+            _
+    } ==> @End
+  }
+\end{Verbatim}
+
+\newpage
+The complete bytecode produced is:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,tabsize=2]
+  fn agreement Alice,Bob Inactive real,real
+  global:
+  GINST party Alice
+  GINST party Bob
+  GINST asset assetA 2 stipula_assetA_ed8i9wk
+  GINST asset assetB 2 stipula_assetB_pl1n5cc
+  GINST real amountAssetA 2
+  GINST real amountAssetB 2
+  args:
+  PUSH party :Alice
+  GSTORE Alice
+  PUSH party :Bob
+  GSTORE Bob
+  PUSH real :amountAssetA
+  GSTORE amountAssetA
+  PUSH real :amountAssetB
+  GSTORE amountAssetB
+  start:
+  end:
+  HALT
+  fn Inactive Alice depositAssetA Swap asset
+  args:
+  PUSH asset :y
+  AINST asset :y
+  ASTORE y
+  start:
+  ALOAD y
+  GLOAD amountAssetA
+  ISEQ
+  JMPIF if_branch
+  RAISE AMOUNT_NOT_EQUAL
+  JMP end
+  if_branch:
+  ALOAD y
+  GLOAD assetA
+  DEPOSIT assetA
+  end:
+  HALT
+  fn Swap Bob depositAssetBAndSwap End asset
+  args:
+  PUSH asset :y
+  AINST asset :y
+  ASTORE y
+  start:
+  ALOAD y
+  GLOAD amountAssetB
+  ISEQ
+  JMPIF if_branch
+  RAISE AMOUNT_NOT_EQUAL
+  JMP end
+  if_branch:
+  ALOAD y
+  GLOAD assetB
+  DEPOSIT assetB
+  PUSH real 100 2
+  GLOAD assetB
+  GLOAD Alice
+  WITHDRAW assetB
+  PUSH real 100 2
+  GLOAD assetA
+  GLOAD Bob
+  WITHDRAW assetA
+  end:
+  HALT
+\end{Verbatim}
+
+\section{Asset swap with scheduled event}
+
+\subsection{Complete code}
+\label{app:asset-swap-event-complete-code}
+
+The complete code of the contract written in \textit{Stipula} is the following:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,tabsize=2]
+  stipula SwapAssetWithEvent {
+    asset assetA:stipula_assetA_ed8i9wk, assetB:stipula_assetB_pl1n5cc
+    field amountAssetA, amountAssetB, waitTimeBeforeSwapping
+    init Inactive
+
+    agreement (Alice, Bob)(amountAssetA, amountAssetB, waitTimeBeforeSwapping) {
+        Alice, Bob: amountAssetA, amountAssetB, waitTimeBeforeSwapping
+    } ==> @Inactive
+
+    @Inactive Alice : depositAssetA()[y]
+        (y == amountAssetA) {
+            y -o assetA;
+            _
+    } ==> @Deposit
+
+    @Deposit Bob : depositAssetB()[y]
+        (y == amountAssetB) {
+            y -o assetB;
+            now + waitTimeBeforeSwapping >>
+                @Swap {
+                    assetB -o Alice
+                    assetA -o Bob
+                } ==> @End
+    } ==> @Swap
+  }
+\end{Verbatim}
+
+The complete bytecode produced is:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,tabsize=2]
+  fn agreement Alice,Bob Inactive real,real,time
+  global:
+  GINST party Alice
+  GINST party Bob
+  GINST asset assetA 2 stipula_assetA_ed8i9wk
+  GINST asset assetB 2 stipula_assetB_pl1n5cc
+  GINST real amountAssetA 2
+  GINST real amountAssetB 2
+  GINST time waitTimeBeforeSwapping
+  args:
+  PUSH party :Alice
+  GSTORE Alice
+  PUSH party :Bob
+  GSTORE Bob
+  PUSH real :amountAssetA
+  GSTORE amountAssetA
+  PUSH real :amountAssetB
+  GSTORE amountAssetB
+  PUSH time :waitTimeBeforeSwapping
+  GSTORE waitTimeBeforeSwapping
+  start:
+  end:
+  HALT
+  fn Inactive Alice depositAssetA Deposit asset
+  args:
+  PUSH asset :y
+  AINST asset :y
+  ASTORE y
+  start:
+  ALOAD y
+  GLOAD amountAssetA
+  ISEQ
+  JMPIF if_branch
+  RAISE AMOUNT_NOT_EQUAL
+  JMP end
+  if_branch:
+  ALOAD y
+  GLOAD assetA
+  DEPOSIT assetA
+  end:
+  HALT
+  fn Deposit Bob depositAssetB Swap asset
+  args:
+  PUSH asset :y
+  AINST asset :y
+  ASTORE y
+  start:
+  ALOAD y
+  GLOAD amountAssetB
+  ISEQ
+  JMPIF if_branch
+  RAISE AMOUNT_NOT_EQUAL
+  JMP end
+  if_branch:
+  ALOAD y
+  GLOAD assetB
+  DEPOSIT assetB
+  GLOAD waitTimeBeforeSwapping
+  PUSH time now
+  ADD
+  TRIGGER obligation_1
+  end:
+  HALT
+  obligation Swap obligation_1 End
+  start:
+  PUSH real 100 2
+  GLOAD assetB
+  GLOAD Alice
+  WITHDRAW assetB
+  PUSH real 100 2
+  GLOAD assetA
+  GLOAD Bob
+  WITHDRAW assetA
+  end:
+  HALT
+\end{Verbatim}
+
+\subsection{Complete example of execution}
+\label{app:asset-swap-event-complete-execution}
+
+\paragraph{Deploy contract}
+
+Request to the server for contract deployment:
+{
+  \small
+  \begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+    {
+    "message": {
+      "sourceCode": "stipula SwapAsset {\n    asset assetA:stipula_assetA_ed8i9wk, assetB:stipula_assetB_pl1n5cc\n    field amountAssetA, amountAssetB, waitTimeBeforeSwapping\n    init Inactive\n\n    agreement (Alice, Bob)(amountAssetA, amountAssetB, waitTimeBeforeSwapping) {\n        Alice, Bob: amountAssetA, amountAssetB, waitTimeBeforeSwapping\n    } ==> @Inactive\n\n    @Inactive Alice : depositAssetA()[y]\n        (y == amountAssetA) {\n            y -o assetA;\n            _\n    } ==> @Deposit\n\n    @Deposit Bob : depositAssetB()[y]\n        (y == amountAssetB) {\n            y -o assetB;\n            now + waitTimeBeforeSwapping >>\n                @Swap {\n                    assetB -o Alice\n                    assetA -o Bob\n                } ==> @End\n    } ==> @Swap\n}",
+      "type": "DeployContract"
+    },
+    "signatures": {
+      "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCo/GjVKS+3gAA55+kko41yINdOcCLQMSBQyuTTkKHE1mhu/TgOpivM0wLPsSga8hQMr3+v3aR0IF/vfCRf6SdiXmWx/jflmEXtnT6fkGcnV6dGNUpHWXSpwUIDt0N88jfnEqekx4S+KDCKg99sGEeHeT65fKS8lB0gjHMt9AOriwIDAQAB": "MXw6Xje7jDsbk0Cqfrx6z2pWZiUchw8i9+KsYQ5KPVNic4YQtYYn0Ei64YulnpdNS/jTUxMuJnxW8dOAItDbPeR233731Lh3clnR1xWhRezUBNIF0ZAL2iqVHgaHUYeVNXBaZz1QR+xuj1srSarugnX4LshvZSXGTUUR/U7W4bE="
+    }
+  }
+  \end{Verbatim}
+}
+
+Server response:
+{
+  \small
+  \begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+    {
+      "data": "79caadf1-abbe-418a-a9a2-bd132a6f3e9e",
+      "statusCode": 200,
+      "statusMessage": "Success",
+      "type": "SuccessDataResponse"
+    }
+  \end{Verbatim}
+}
+
+The value in the \verb|data| field indicates the identifier of the deployed contract.
+
+\paragraph{Single-use-seals by Alice}
+
+Server request to get Alice's single-use-seals:
+{
+  \small
+  \begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+    {
+      "message": {
+        "address": "ubL35Am7TimL5R4oMwm2OxgAYA3XT3BeeDE56oxqdLc=",
+        "type": "GetOwnershipsByAddress"
+      },
+      "signatures": {
+        "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCo/GjVKS+3gAA55+kko41yINdOcCLQMSBQyuTTkKHE1mhu/TgOpivM0wLPsSga8hQMr3+v3aR0IF/vfCRf6SdiXmWx/jflmEXtnT6fkGcnV6dGNUpHWXSpwUIDt0N88jfnEqekx4S+KDCKg99sGEeHeT65fKS8lB0gjHMt9AOriwIDAQAB": "MomZTc63z7PfH35c1dL4tjXebcsW+0Zxl0nP1NQdcUFws98DX+bMWI7L0C6IO5lxvkYve4zdio1Crn97FXvngK4aVfiEZEnHOJ0tstq7uQYGErM3DDAABqPq8HH5yoKnLST2LWpO0oD8G/VXvIE6qMT5D34W1Ci0q4uh+7y3EcY="
+      }
+    }
+  \end{Verbatim}
+}
+
+Server response:
+{
+  \small
+  \begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+    {
+      "data": "[
+          Ownership{
+            id='2b4a4614-3bb4-4554-93fe-c034c3ba5a9c', 
+            singleUseSeal=SingleUseSeal{
+              assetId='stipula_assetA_ed8i9wk', 
+              amount=RealType{
+                value=1400, 
+                decimals=2
+              }, 
+              lockScript='DUP\nSHA256\nPUSH str ubL35Am7TimL5R4oMwm2OxgAYA3XT3BeeDE56oxqdLc=\nEQUAL\nCHECKSIG\nHALT\n'
+            }, 
+            unlockScript='', 
+            contractInstanceId=''
+          }
+        ]",
+      "statusCode": 200,
+      "statusMessage": "Success",
+      "type": "SuccessDataResponse"
+    }
+  \end{Verbatim}
+}
+
+\paragraph{Single-use-seals by Bob}
+
+Server request to get Bob's single-use-seals:
+{
+  \small
+  \begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+    {
+      "message": {
+        "address": "f3hVW1Amltnqe3KvOT00eT7AU23FAUKdgmCluZB+nss=",
+        "type": "GetOwnershipsByAddress"
+      },
+      "signatures": {
+        "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDErzzgD2ZslZxciFAiX3/ot7lrkZDw4148jFZrsDZPE6CVs9xXFSHGgy/mFvIFLXhnChO6Nyd2be3lbgeavLMCMVUiTStXr117Km17keWpb3sItkKKsLFBOcIIU8XXowI/OhzQN2XPZYESHgjdQ5vwEj2YyueiS7WKP94YWz/pswIDAQAB": "hSNodnUyusffNlv+KNq4605pFvqh91pVspFhTgbmWccE/LKM6h4bedpvTgMHoVDezvA7v2XTzmLG5eL3lOeA6I2xJMH32DcV60IPSoh61oVHnwPQcQHY039D4y5VSJ0GMQJKIcTEq3fqIdabg7261xUaegHUnXrcyynh9GpMJxk="
+      }
+    }
+  \end{Verbatim}
+}
+
+Server response:
+{
+  \small
+  \begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+    {
+      "data": "[
+          Ownership{
+            id='7a19f50e-eae9-461d-bd58-9946ea39ccf0', 
+            singleUseSeal=SingleUseSeal{
+              assetId='stipula_assetB_pl1n5cc', 
+              amount=RealType{
+                value=1100, 
+                decimals=2
+              }, 
+              lockScript='DUP\nSHA256\nPUSH str f3hVW1Amltnqe3KvOT00eT7AU23FAUKdgmCluZB+nss=\nEQUAL\nCHECKSIG\nHALT\n'
+            }, 
+            unlockScript='', 
+            contractInstanceId=''
+          }
+        ]",
+      "statusCode": 200,
+      "statusMessage": "Success",
+      "type": "SuccessDataResponse"
+    }
+  \end{Verbatim}
+}
+
+\paragraph{Agreement}
+
+Request to the server to make the \verb|agreement| function call:
+{
+  \small
+  \begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+    {
+      "message": {
+        "contractId": "79caadf1-abbe-418a-a9a2-bd132a6f3e9e",
+        "arguments": [
+          {
+            "argument": {
+              "first": "real",
+              "second": "amountAssetA",
+              "third": "1400 2"
+            }
+          },
+          {
+            "argument": {
+              "first": "real",
+              "second": "amountAssetB",
+              "third": "1100 2"
+            }
+          },
+          {
+            "argument": {
+              "first": "time",
+              "second": "waitTimeBeforeSwapping",
+              "third": "100"
+            }
+          }
+        ],
+        "parties": {
+          "Bob": {
+            "address": "f3hVW1Amltnqe3KvOT00eT7AU23FAUKdgmCluZB+nss=",
+            "publicKey": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDErzzgD2ZslZxciFAiX3/ot7lrkZDw4148jFZrsDZPE6CVs9xXFSHGgy/mFvIFLXhnChO6Nyd2be3lbgeavLMCMVUiTStXr117Km17keWpb3sItkKKsLFBOcIIU8XXowI/OhzQN2XPZYESHgjdQ5vwEj2YyueiS7WKP94YWz/pswIDAQAB"
+          },
+          "Alice": {
+            "address": "ubL35Am7TimL5R4oMwm2OxgAYA3XT3BeeDE56oxqdLc=",
+            "publicKey": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCo/GjVKS+3gAA55+kko41yINdOcCLQMSBQyuTTkKHE1mhu/TgOpivM0wLPsSga8hQMr3+v3aR0IF/vfCRf6SdiXmWx/jflmEXtnT6fkGcnV6dGNUpHWXSpwUIDt0N88jfnEqekx4S+KDCKg99sGEeHeT65fKS8lB0gjHMt9AOriwIDAQAB"
+          }
+        },
+        "type": "AgreementCall"
+      },
+      "signatures": {
+        "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDErzzgD2ZslZxciFAiX3/ot7lrkZDw4148jFZrsDZPE6CVs9xXFSHGgy/mFvIFLXhnChO6Nyd2be3lbgeavLMCMVUiTStXr117Km17keWpb3sItkKKsLFBOcIIU8XXowI/OhzQN2XPZYESHgjdQ5vwEj2YyueiS7WKP94YWz/pswIDAQAB": "Wrqyz5udZAGarLbSlxhYD+Ur6+EqTCFiwqBHEL2IsO5Y23Yxv14O3UzknrwK41L5LPUgVxR3K75AAZ4n+UcUdDNHlm9KHN7rqpsbe7v3yK2q8Qkk6c4IYNPDRFy3Zw62HH94O7tx8CzcvRfdX4fi+RItf4Fa7hb8Ui/crxDEQN8=",
+        "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCo/GjVKS+3gAA55+kko41yINdOcCLQMSBQyuTTkKHE1mhu/TgOpivM0wLPsSga8hQMr3+v3aR0IF/vfCRf6SdiXmWx/jflmEXtnT6fkGcnV6dGNUpHWXSpwUIDt0N88jfnEqekx4S+KDCKg99sGEeHeT65fKS8lB0gjHMt9AOriwIDAQAB": "o/bdsudfHdR4BBd9EVaGYikksIezSEdwhHELH/f7xRD9g4uokO5g8wHph6LOht5dt9Y+dYt+Qrt+zNZzGUP8a50R7WB2gNz0Jn3zndKnVoBVhsda/zEwIA2pqccP2Sda7zCYiFTfgnmlUZZZfxjtLazBUzDE/vVVFcwtXAHYMXk="
+      }
+    }
+  \end{Verbatim}
+}
+
+For simplicity, the value for \verb|waitTimeBeforeSwapping| is equal to 100, that is, after Bob deposits 
+his asset, they will wait 100 seconds before exchanging assets.
+
+Server response:
+{
+  \small
+  \begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+    {
+      "data": "48819afd-e28f-4037-82fd-1d073ee1d318",
+      "statusCode": 200,
+      "statusMessage": "Success",
+      "type": "SuccessDataResponse"
+    }
+  \end{Verbatim}
+}
+
+The value in the \verb|data| field indicates the identifier of the created contract instance.
+
+\paragraph{depositAssetA call}
+
+Request to the server to make the \verb|depositAssetA| function call:
+{
+  \small
+  \begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+    {
+      "message": {
+        "contractInstanceId": "48819afd-e28f-4037-82fd-1d073ee1d318",
+        "functionName": "depositAssetA",
+        "arguments": [
+          {
+            "argument": {
+              "first": "asset",
+              "second": "y",
+              "third": {
+                "ownershipId": "2b4a4614-3bb4-4554-93fe-c034c3ba5a9c",
+                "address": "ubL35Am7TimL5R4oMwm2OxgAYA3XT3BeeDE56oxqdLc=",
+                "unlockScript": "PUSH str PLjodnT+m3RNIitQAPBDCsRmJPHCqrwZOY/CPiHFZGnl+DRN6soqxMy3ehTFaUwxBjjf7qfBfvTDq5oBItTFrtz1Rn5SDS1ybdbkwpKaOXVglNOw7ZEG9bbZ1mo1oA7IAjRiIilzUetCstE5rPZIf9XOXr/RQ5AHkZUn2CztsvA=\nPUSH str MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCo/GjVKS+3gAA55+kko41yINdOcCLQMSBQyuTTkKHE1mhu/TgOpivM0wLPsSga8hQMr3+v3aR0IF/vfCRf6SdiXmWx/jflmEXtnT6fkGcnV6dGNUpHWXSpwUIDt0N88jfnEqekx4S+KDCKg99sGEeHeT65fKS8lB0gjHMt9AOriwIDAQAB\n"
+              }
+            }
+          }
+        ],
+        "type": "FunctionCall"
+      },
+      "signatures": {
+        "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCo/GjVKS+3gAA55+kko41yINdOcCLQMSBQyuTTkKHE1mhu/TgOpivM0wLPsSga8hQMr3+v3aR0IF/vfCRf6SdiXmWx/jflmEXtnT6fkGcnV6dGNUpHWXSpwUIDt0N88jfnEqekx4S+KDCKg99sGEeHeT65fKS8lB0gjHMt9AOriwIDAQAB": "mo7rInHGBgsYK0igMBDbcWbRLHF93GnpKGj3NYttddc62CdS5yPg+S7XtHSULj50UCMQZRm3l5uPGtJySlaG31m8tV/JtpTSYNuZLOJdt8ViTMYzHPj0O3tI90R5VzZyyqBV7MkYmKkCK9jBAG3v0V1AqPD8wupXmXjzb5jWi1Q="
+      }
+    }
+  \end{Verbatim}
+}
+
+\newpage
+Server response:
+{
+  \small
+  \begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+    {
+      "statusCode": 200,
+      "statusMessage": "Success",
+      "type": "SuccessDataResponse"
+    }
+  \end{Verbatim}
+}
+
+\paragraph{depositAssetB call}
+
+Request to the server to make the \verb|depositAssetBAndSwap| function call:
+{
+  \small
+  \begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+    {
+      "message": {
+        "contractInstanceId": "48819afd-e28f-4037-82fd-1d073ee1d318",
+        "functionName": "depositAssetB",
+        "arguments": [
+          {
+            "argument": {
+              "first": "asset",
+              "second": "y",
+              "third": {
+                "ownershipId": "7a19f50e-eae9-461d-bd58-9946ea39ccf0",
+                "address": "f3hVW1Amltnqe3KvOT00eT7AU23FAUKdgmCluZB+nss=",
+                "unlockScript": "PUSH str Q0bPh9lThyrg1slz9AGDJDJh1BecN9SlGCeVe3BqLod+zO7q0wvIy8tLognHNBkR8e8zKo6nWGQ8qZ7egjOmm5BQsqZzt8xL3gBbR36vgk9J3G9ObiTR2Dd7hMqsqyJnLT3aZUPXGc6RZoM/iUFGJUXhq2T6DStvYNKuAH+Lfow=\nPUSH str MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDErzzgD2ZslZxciFAiX3/ot7lrkZDw4148jFZrsDZPE6CVs9xXFSHGgy/mFvIFLXhnChO6Nyd2be3lbgeavLMCMVUiTStXr117Km17keWpb3sItkKKsLFBOcIIU8XXowI/OhzQN2XPZYESHgjdQ5vwEj2YyueiS7WKP94YWz/pswIDAQAB\n"
+              }
+            }
+          }
+        ],
+        "type": "FunctionCall"
+      },
+      "signatures": {
+        "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDErzzgD2ZslZxciFAiX3/ot7lrkZDw4148jFZrsDZPE6CVs9xXFSHGgy/mFvIFLXhnChO6Nyd2be3lbgeavLMCMVUiTStXr117Km17keWpb3sItkKKsLFBOcIIU8XXowI/OhzQN2XPZYESHgjdQ5vwEj2YyueiS7WKP94YWz/pswIDAQAB": "VpIlGFopW81rCZ85cuFG+ks5UEhOz4Au8YGAtL7RDH+62l7Va159SCjiyy9y/FBTkYqgId74CC1jJnjfOdMiUy7jasgPa9JiJVUZSo5L/pq3e3pA5LWc4cb/8Yslu+Ax8zPmMzRwCPPu9/5jcowvtk06NcG1NNdW3Np5vP+M9vM="
+      }
+    }
+  \end{Verbatim}
+}
+
+Server response:
+{
+  \small
+  \begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+    {
+      "statusCode": 200,
+      "statusMessage": "Success",
+      "type": "SuccessDataResponse"
+    }
+  \end{Verbatim}
+}
+
+\paragraph{Event trigger and execution of the obligation}
+
+From the server logs it can be seen that the event was triggered, the code encoding the obligation was 
+loaded and executed:
+{
+  \small
+  \begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+    EventTrigger: A new scheduled request has been triggered => EventTriggerSchedulingRequest{
+      request=CreateEventRequest{
+        obligationFunctionName='obligation_1', 
+        time=1680032647
+      }, 
+      contractId='79caadf1-abbe-418a-a9a2-bd132a6f3e9e', 
+      contractInstanceId='48819afd-e28f-4037-82fd-1d073ee1d318'
+    }
+    EventTrigger: Enqueuing the request...
+    EventTrigger: Notifying the virtual machine...
+    EventTrigger: Virtual machine notified
+    EventTrigger: Removing the request from EventTriggerHandler...
+    VirtualMachine: Ready to dequeue a value...
+    VirtualMachine: Request received => Pair{
+      first=null, 
+      second=EventTriggerSchedulingRequest{
+        request=CreateEventRequest{
+          obligationFunctionName='obligation_1', 
+          time=1680032647
+        }, 
+        contractId='79caadf1-abbe-418a-a9a2-bd132a6f3e9e', 
+        contractInstanceId='48819afd-e28f-4037-82fd-1d073ee1d318'
+      }
+    }
+    VirtualMachine: Just received a trigger request
+    loadObligationFunction: Loading the obligation function...
+    loadObligationFunction: Obligation function loaded
+    VirtualMachine: Function
+    start:
+    PUSH real 100 2
+    GLOAD assetB
+    GLOAD Alice
+    WITHDRAW assetB
+    PUSH real 100 2
+    GLOAD assetA
+    GLOAD Bob
+    WITHDRAW assetA
+    end:
+    HALT
+  
+    loadBytecode: Loading the bytecode...
+    loadBytecode: Bytecode loaded
+  
+    VirtualMachine: loadBytecode
+    start:
+    PUSH real 100 2
+    GLOAD assetB
+    GLOAD Alice
+    WITHDRAW assetB
+    PUSH real 100 2
+    GLOAD assetA
+    GLOAD Bob
+    WITHDRAW assetA
+    end:
+    HALT
+  
+    LegalContractVirtualMachine: execute => Final state of the execution below
+    LegalContractVirtualMachine: execute => The stack is empty
+  
+    LegalContractVirtualMachine: execute => GlobalSpace
+    assetA: 13.00 stipula_assetA_ed8i9wk, changed: true
+    amountAssetA: 14.00, changed: false
+    assetB: 10.00 stipula_assetB_pl1n5cc, changed: true
+    amountAssetB: 11.00, changed: false
+    Bob: f3hVW1Amltnqe3KvOT00eT7AU23FAUKdgmCluZB+nss= MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDErzzgD2ZslZxciFAiX3/ot7lrkZDw4148jFZrsDZPE6CVs9xXFSHGgy/mFvIFLXhnChO6Nyd2be3lbgeavLMCMVUiTStXr117Km17keWpb3sItkKKsLFBOcIIU8XXowI/OhzQN2XPZYESHgjdQ5vwEj2YyueiS7WKP94YWz/pswIDAQAB, changed: false
+    Alice: ubL35Am7TimL5R4oMwm2OxgAYA3XT3BeeDE56oxqdLc= MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCo/GjVKS+3gAA55+kko41yINdOcCLQMSBQyuTTkKHE1mhu/TgOpivM0wLPsSga8hQMr3+v3aR0IF/vfCRf6SdiXmWx/jflmEXtnT6fkGcnV6dGNUpHWXSpwUIDt0N88jfnEqekx4S+KDCKg99sGEeHeT65fKS8lB0gjHMt9AOriwIDAQAB, changed: false
+    waitTimeBeforeSwapping: 100, changed: false
+  
+    LegalContractVirtualMachine: execute => The argument space is empty
+  
+    LegalContractVirtualMachine: execute => The data space is empty
+  
+    Global state of the execution
+    running -> false
+    executionPointer -> 10
+    executionPointer (with offset) -> 74
+    length of the program -> 11
+    length of the program (with offset) -> 75
+    VirtualMachine: Updating the global store...
+    VirtualMachine: Global store updated
+    VirtualMachine: Ready to dequeue a value...
+    VirtualMachine: I'm waiting...
+  \end{Verbatim}
+}
+
+The description of the following flow is illustrated in figure \ref{fig:obligation-flow}. When the 
+\verb|EventTrigger| added the request to the request queue, the virtual machine will dequeue the request 
+(\textbf{2}) and execute the function that encodes the obligation. If the conditions exist to execute the 
+obligation, then the virtual machine will execute the function (\textbf{3}) and will send the processing 
+result to the \textit{Storage} module (\textbf{4}). If there are no conditions to perform the obligation, 
+the virtual machine will not perform the function.
+
+\newpage
+\paragraph{Single-use-seals by Alice}
+
+Server request to get Alice's single-use-seals:
+{
+  \small
+  \begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+    {
+      "message": {
+        "address": "ubL35Am7TimL5R4oMwm2OxgAYA3XT3BeeDE56oxqdLc=",
+        "type": "GetOwnershipsByAddress"
+      },
+      "signatures": {
+        "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCo/GjVKS+3gAA55+kko41yINdOcCLQMSBQyuTTkKHE1mhu/TgOpivM0wLPsSga8hQMr3+v3aR0IF/vfCRf6SdiXmWx/jflmEXtnT6fkGcnV6dGNUpHWXSpwUIDt0N88jfnEqekx4S+KDCKg99sGEeHeT65fKS8lB0gjHMt9AOriwIDAQAB": "MomZTc63z7PfH35c1dL4tjXebcsW+0Zxl0nP1NQdcUFws98DX+bMWI7L0C6IO5lxvkYve4zdio1Crn97FXvngK4aVfiEZEnHOJ0tstq7uQYGErM3DDAABqPq8HH5yoKnLST2LWpO0oD8G/VXvIE6qMT5D34W1Ci0q4uh+7y3EcY="
+      }
+    }
+  \end{Verbatim}
+}
+
+Server response:
+{
+  \small
+  \begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+    {
+      "data": "[
+          Ownership{
+            id='2b4a4614-3bb4-4554-93fe-c034c3ba5a9c', 
+            singleUseSeal=SingleUseSeal{
+              assetId='stipula_assetA_ed8i9wk', 
+              amount=RealType{
+                value=1400, 
+                decimals=2
+              }, 
+              lockScript='DUP\nSHA256\nPUSH str ubL35Am7TimL5R4oMwm2OxgAYA3XT3BeeDE56oxqdLc=\nEQUAL\nCHECKSIG\nHALT\n'
+            }, 
+            unlockScript='PUSH str PLjodnT+m3RNIitQAPBDCsRmJPHCqrwZOY/CPiHFZGnl+DRN6soqxMy3ehTFaUwxBjjf7qfBfvTDq5oBItTFrtz1Rn5SDS1ybdbkwpKaOXVglNOw7ZEG9bbZ1mo1oA7IAjRiIilzUetCstE5rPZIf9XOXr/RQ5AHkZUn2CztsvA=\nPUSH str MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCo/GjVKS+3gAA55+kko41yINdOcCLQMSBQyuTTkKHE1mhu/TgOpivM0wLPsSga8hQMr3+v3aR0IF/vfCRf6SdiXmWx/jflmEXtnT6fkGcnV6dGNUpHWXSpwUIDt0N88jfnEqekx4S+KDCKg99sGEeHeT65fKS8lB0gjHMt9AOriwIDAQAB\n', 
+            contractInstanceId='48819afd-e28f-4037-82fd-1d073ee1d318'
+          }, 
+          Ownership{
+            id='a325a1ed-612c-4201-b5ef-0a58ff184509', 
+            singleUseSeal=SingleUseSeal{
+              assetId='stipula_assetB_pl1n5cc', 
+              amount=RealType{
+                value=100, 
+                decimals=2
+              }, 
+              lockScript='DUP\nSHA256\nPUSH str ubL35Am7TimL5R4oMwm2OxgAYA3XT3BeeDE56oxqdLc=\nEQUAL\nCHECKSIG\nHALT\n'
+            }, 
+            unlockScript='', 
+            contractInstanceId=''
+          }
+        ]",
+      "statusCode": 200,
+      "statusMessage": "Success",
+      "type": "SuccessDataResponse"
+    }
+  \end{Verbatim}
+}
+
+It is possible to see that the first single-use-seal has been spent and that's what was deposited in the 
+contract instance. Evidence that the funds have been spent is given by the \verb|unlockScript| field. 
+While, the second single-use-seal represents the asset that was in Bob's possession.
+
+\paragraph{Single-use-seals by Bob}
+
+Server request to get Bob's single-use-seals:
+{
+  \small
+  \begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+    {
+      "message": {
+        "address": "f3hVW1Amltnqe3KvOT00eT7AU23FAUKdgmCluZB+nss=",
+        "type": "GetOwnershipsByAddress"
+      },
+      "signatures": {
+        "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDErzzgD2ZslZxciFAiX3/ot7lrkZDw4148jFZrsDZPE6CVs9xXFSHGgy/mFvIFLXhnChO6Nyd2be3lbgeavLMCMVUiTStXr117Km17keWpb3sItkKKsLFBOcIIU8XXowI/OhzQN2XPZYESHgjdQ5vwEj2YyueiS7WKP94YWz/pswIDAQAB": "hSNodnUyusffNlv+KNq4605pFvqh91pVspFhTgbmWccE/LKM6h4bedpvTgMHoVDezvA7v2XTzmLG5eL3lOeA6I2xJMH32DcV60IPSoh61oVHnwPQcQHY039D4y5VSJ0GMQJKIcTEq3fqIdabg7261xUaegHUnXrcyynh9GpMJxk="
+      }
+    }
+  \end{Verbatim}
+}
+
+Server response:
+{
+  \small
+  \begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+    {
+      "data": "[
+          Ownership{
+            id='7a19f50e-eae9-461d-bd58-9946ea39ccf0', 
+            singleUseSeal=SingleUseSeal{
+              assetId='stipula_assetB_pl1n5cc', 
+              amount=RealType{
+                value=1100, 
+                decimals=2
+              }, 
+              lockScript='DUP\nSHA256\nPUSH str f3hVW1Amltnqe3KvOT00eT7AU23FAUKdgmCluZB+nss=\nEQUAL\nCHECKSIG\nHALT\n'
+            }, 
+            unlockScript='PUSH str Q0bPh9lThyrg1slz9AGDJDJh1BecN9SlGCeVe3BqLod+zO7q0wvIy8tLognHNBkR8e8zKo6nWGQ8qZ7egjOmm5BQsqZzt8xL3gBbR36vgk9J3G9ObiTR2Dd7hMqsqyJnLT3aZUPXGc6RZoM/iUFGJUXhq2T6DStvYNKuAH+Lfow=\nPUSH str MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDErzzgD2ZslZxciFAiX3/ot7lrkZDw4148jFZrsDZPE6CVs9xXFSHGgy/mFvIFLXhnChO6Nyd2be3lbgeavLMCMVUiTStXr117Km17keWpb3sItkKKsLFBOcIIU8XXowI/OhzQN2XPZYESHgjdQ5vwEj2YyueiS7WKP94YWz/pswIDAQAB\n', 
+            contractInstanceId='48819afd-e28f-4037-82fd-1d073ee1d318'
+          }, 
+          Ownership{
+            id='fa8a1383-3f42-4d7b-ad2a-d3e47ee1eb4b', 
+            singleUseSeal=SingleUseSeal{
+              assetId='stipula_assetA_ed8i9wk', 
+              amount=RealType{
+                value=100, 
+                decimals=2
+              }, 
+              lockScript='DUP\nSHA256\nPUSH str f3hVW1Amltnqe3KvOT00eT7AU23FAUKdgmCluZB+nss=\nEQUAL\nCHECKSIG\nHALT\n'
+            }, 
+            unlockScript='', 
+            contractInstanceId=''
+          }
+        ]",
+      "statusCode": 200,
+      "statusMessage": "Success",
+      "type": "SuccessDataResponse"
+    }
+  \end{Verbatim}
+}
+
+It is possible to see that the first single-use-seal has been spent and that's what was deposited in the 
+contract instance. Evidence that the funds have been spent is given by the \verb|unlockScript| field. 
+While, the second single-use-seal represents the asset that was in Alice's possession.
+
+\section{Bike rental}
+
+\subsection{Complete code}
+\label{app:bike-rental-complete-code}
+
+The complete code of the contract written in \textit{Stipula} is the following:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,tabsize=2]
+  stipula BikeRental {
+    asset wallet:stipula_coin_asd345
+    field cost, rentingTime, use_code
+    init Inactive
+
+    agreement (Lender, Borrower)(cost, rentingTime){
+        Lender, Borrower: cost, rentingTime
+    } ==> @Inactive
+
+    @Inactive Lender : offer(z)[] {
+        z -> use_code;
+        _
+    } ==> @Proposal
+
+    @Proposal Borrower : accept()[y]
+        (y == cost) {
+            y -o wallet;
+            now + rentingTime >>
+                @Using {
+                    wallet -o Lender
+                } ==> @End
+    } ==> @Using
+
+    @Using Borrower : end()[] {
+        wallet -o Lender;
+        _
+    } ==> @End
+  }
+\end{Verbatim}
+
+The complete bytecode produced is:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,tabsize=2]
+  fn agreement Lender,Borrower Inactive real,time
+  global:
+  GINST party Lender
+  GINST party Borrower
+  GINST asset wallet 2 stipula_coin_asd345
+  GINST real cost 2
+  GINST time rentingTime
+  GINST * use_code
+  args:
+  PUSH party :Lender
+  GSTORE Lender
+  PUSH party :Borrower
+  GSTORE Borrower
+  PUSH real :cost
+  GSTORE cost
+  PUSH time :rentingTime
+  GSTORE rentingTime
+  start:
+  end:
+  HALT
+  fn Inactive Lender offer Proposal *
+  args:
+  PUSH * :z
+  AINST * :z
+  ASTORE z
+  start:
+  ALOAD z
+  GSTORE use_code
+  end:
+  HALT
+  fn Proposal Borrower accept Using asset
+  args:
+  PUSH asset :y
+  AINST asset :y
+  ASTORE y
+  start:
+  ALOAD y
+  GLOAD cost
+  ISEQ
+  JMPIF if_branch
+  RAISE AMOUNT_NOT_EQUAL
+  JMP end
+  if_branch:
+  ALOAD y
+  GLOAD wallet
+  DEPOSIT wallet
+  GLOAD rentingTime
+  PUSH time now
+  ADD
+  TRIGGER obligation_1
+  end:
+  HALT
+  fn Using Borrower end End
+  start:
+  PUSH real 100 2
+  GLOAD wallet
+  GLOAD Lender
+  WITHDRAW wallet
+  end:
+  HALT
+  obligation Using obligation_1 End
+  start:
+  PUSH real 100 2
+  GLOAD wallet
+  GLOAD Lender
+  WITHDRAW wallet
+  end:
+  HALT
+\end{Verbatim}
+
+\subsection{Complete example of execution}
+\label{app:bike-rental-complete-execution}
+
+\paragraph{Deploy contract}
+
+Request to the server for contract deployment:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+  {
+    "message": {
+      "sourceCode": "stipula BikeRental {\n    asset wallet:stipula_coin_asd345\n    field cost, rentingTime, use_code\n    init Inactive\n\n    agreement (Lender, Borrower)(cost, rentingTime){\n        Lender, Borrower: cost, rentingTime\n    } ==> @Inactive\n\n    @Inactive Lender : offer(z)[] {\n        z -> use_code;\n        _\n    } ==> @Proposal\n\n    @Proposal Borrower : accept()[y]\n        (y == cost) {\n            y -o wallet;\n            now + rentingTime >>\n                @Using {\n                    wallet -o Lender\n                } ==> @End\n    } ==> @Using\n\n    @Using Borrower : end()[] {\n        wallet -o Lender;\n        _\n    } ==> @End\n}\n",
+      "type": "DeployContract"
+    },
+    "signatures": {
+      "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCo/GjVKS+3gAA55+kko41yINdOcCLQMSBQyuTTkKHE1mhu/TgOpivM0wLPsSga8hQMr3+v3aR0IF/vfCRf6SdiXmWx/jflmEXtnT6fkGcnV6dGNUpHWXSpwUIDt0N88jfnEqekx4S+KDCKg99sGEeHeT65fKS8lB0gjHMt9AOriwIDAQAB": "UTtjlNtPutvql7jAaC0N6HiD1Q+83hborpEvcjvnzbc6lDwwZioGjp2cOKHpC6YXypyqjQZnp1TeagacO9KSZLSZuduBHwiNE20qEgXTCYr0oB1Sww09AQgI23vEoIHf7V0SzLdkfTC6DMxD2nBcMju/4z6xGbXnjfwR+sqxkZE="
+    }
+  }
+\end{Verbatim}
+
+Server response:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+  {
+    "data": "622ad60b-ab1f-4c2c-9f64-1307c046b55d",
+    "statusCode": 200,
+    "statusMessage": "Success",
+    "type": "SuccessDataResponse"
+  }
+\end{Verbatim}
+
+The value in the \verb|data| field indicates the identifier of the deployed contract.
+
+\paragraph{Single-use-seals by Lender}
+
+Server request to get \verb|Lender|'s single-use-seals:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+  {
+    "message": {
+      "address": "ubL35Am7TimL5R4oMwm2OxgAYA3XT3BeeDE56oxqdLc=",
+      "type": "GetOwnershipsByAddress"
+    },
+    "signatures": {
+      "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCo/GjVKS+3gAA55+kko41yINdOcCLQMSBQyuTTkKHE1mhu/TgOpivM0wLPsSga8hQMr3+v3aR0IF/vfCRf6SdiXmWx/jflmEXtnT6fkGcnV6dGNUpHWXSpwUIDt0N88jfnEqekx4S+KDCKg99sGEeHeT65fKS8lB0gjHMt9AOriwIDAQAB": "MomZTc63z7PfH35c1dL4tjXebcsW+0Zxl0nP1NQdcUFws98DX+bMWI7L0C6IO5lxvkYve4zdio1Crn97FXvngK4aVfiEZEnHOJ0tstq7uQYGErM3DDAABqPq8HH5yoKnLST2LWpO0oD8G/VXvIE6qMT5D34W1Ci0q4uh+7y3EcY="
+    }
+  }
+\end{Verbatim}
+
+Server response:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+  {
+    "data": "[]",
+    "statusCode": 200,
+    "statusMessage": "Success",
+    "type": "SuccessDataResponse"
+  }
+\end{Verbatim}
+
+It is possible to notice that the \verb|Lender| it has no funds.
+
+\paragraph{Single-use-seals by Borrower}
+
+Server request to get \verb|Borrower|'s single-use-seals:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+  {
+    "message": {
+      "address": "f3hVW1Amltnqe3KvOT00eT7AU23FAUKdgmCluZB+nss=",
+      "type": "GetOwnershipsByAddress"
+    },
+    "signatures": {
+      "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDErzzgD2ZslZxciFAiX3/ot7lrkZDw4148jFZrsDZPE6CVs9xXFSHGgy/mFvIFLXhnChO6Nyd2be3lbgeavLMCMVUiTStXr117Km17keWpb3sItkKKsLFBOcIIU8XXowI/OhzQN2XPZYESHgjdQ5vwEj2YyueiS7WKP94YWz/pswIDAQAB": "hSNodnUyusffNlv+KNq4605pFvqh91pVspFhTgbmWccE/LKM6h4bedpvTgMHoVDezvA7v2XTzmLG5eL3lOeA6I2xJMH32DcV60IPSoh61oVHnwPQcQHY039D4y5VSJ0GMQJKIcTEq3fqIdabg7261xUaegHUnXrcyynh9GpMJxk="
+    }
+  }
+\end{Verbatim}
+
+Server response:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+  {
+    "data": "[
+        Ownership{
+          id='1ce080e5-8c81-48d1-b732-006fa1cc4e2e', 
+          singleUseSeal=SingleUseSeal{
+            assetId='stipula_coin_asd345', 
+            amount=RealType{
+              value=1200, 
+              decimals=2
+            }, 
+            lockScript='DUP\nSHA256\nPUSH str f3hVW1Amltnqe3KvOT00eT7AU23FAUKdgmCluZB+nss=\nEQUAL\nCHECKSIG\nHALT\n'
+          }, 
+          unlockScript='', 
+          contractInstanceId=''
+        }
+      ]",
+    "statusCode": 200,
+    "statusMessage": "Success",
+    "type": "SuccessDataResponse"
+  }
+\end{Verbatim}
+
+\paragraph{Agreement}
+
+Request to the server to make the \verb|agreement| function call:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+  {
+    "message": {
+      "contractId": "622ad60b-ab1f-4c2c-9f64-1307c046b55d",
+      "arguments": [
+        {
+          "argument": {
+            "first": "real",
+            "second": "cost",
+            "third": "1200 2"
+          }
+        },
+        {
+          "argument": {
+            "first": "time",
+            "second": "rentingTime",
+            "third": "100"
+          }
+        }
+      ],
+      "parties": {
+        "Borrower": {
+          "address": "f3hVW1Amltnqe3KvOT00eT7AU23FAUKdgmCluZB+nss=",
+          "publicKey": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDErzzgD2ZslZxciFAiX3/ot7lrkZDw4148jFZrsDZPE6CVs9xXFSHGgy/mFvIFLXhnChO6Nyd2be3lbgeavLMCMVUiTStXr117Km17keWpb3sItkKKsLFBOcIIU8XXowI/OhzQN2XPZYESHgjdQ5vwEj2YyueiS7WKP94YWz/pswIDAQAB"
+        },
+        "Lender": {
+          "address": "ubL35Am7TimL5R4oMwm2OxgAYA3XT3BeeDE56oxqdLc=",
+          "publicKey": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCo/GjVKS+3gAA55+kko41yINdOcCLQMSBQyuTTkKHE1mhu/TgOpivM0wLPsSga8hQMr3+v3aR0IF/vfCRf6SdiXmWx/jflmEXtnT6fkGcnV6dGNUpHWXSpwUIDt0N88jfnEqekx4S+KDCKg99sGEeHeT65fKS8lB0gjHMt9AOriwIDAQAB"
+        }
+      },
+      "type": "AgreementCall"
+    },
+    "signatures": {
+      "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDErzzgD2ZslZxciFAiX3/ot7lrkZDw4148jFZrsDZPE6CVs9xXFSHGgy/mFvIFLXhnChO6Nyd2be3lbgeavLMCMVUiTStXr117Km17keWpb3sItkKKsLFBOcIIU8XXowI/OhzQN2XPZYESHgjdQ5vwEj2YyueiS7WKP94YWz/pswIDAQAB": "o9hrAXSkpskhxRdS+7vWSi85DhAlYlPt7EWUkYFsLOmo8ZluA0MNcLksi2FEFs3f5Gsike0nvrVCKKGVHIQLaBsDr9TgHVBEwNV7IqsvBaTuO7GaIndWmaC2T+oVKzzpuO30p5MWx4ukmZ+c3BjZrtS060qVZdfYXaa9mByBDPM=",
+      "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCo/GjVKS+3gAA55+kko41yINdOcCLQMSBQyuTTkKHE1mhu/TgOpivM0wLPsSga8hQMr3+v3aR0IF/vfCRf6SdiXmWx/jflmEXtnT6fkGcnV6dGNUpHWXSpwUIDt0N88jfnEqekx4S+KDCKg99sGEeHeT65fKS8lB0gjHMt9AOriwIDAQAB": "ITY3VKqPbsLtAuSk5xabu2v9pVTaGyypMxEzxhLv+JOgoHmdkCkPV8k3JG4efJR/AdqaZrFvJWg8SGFwylWBKMP0/83GvToRdIBkfHg78v6fOzh+xVRtFH0OhPnPHNksKn9EZwidhJEiNyEKYMfT6VADhaFkjdLCXcYqjUUrKzY="
+    }
+  }
+\end{Verbatim}
+
+For simplicity, the value for \verb|rentingTime| is equal to 100, that is, after the \verb|Borrower| has 
+deposited its asset, it will take 100 seconds before the \verb|Borrower| terms of using the service.
+
+Server response:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+  {
+    "data": "4cc1f3c7-5cb4-4528-b15a-8e5cacf5b18a",
+    "statusCode": 200,
+    "statusMessage": "Success",
+    "type": "SuccessDataResponse"
+  }
+\end{Verbatim}
+
+The value in the \verb|data| field indicates the identifier of the created contract instance.
+
+\paragraph{offer call}
+
+Request to the server to make the \verb|offer| function call:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+  {
+    "message": {
+      "contractInstanceId": "4cc1f3c7-5cb4-4528-b15a-8e5cacf5b18a",
+      "functionName": "offer",
+      "arguments": [
+        {
+          "argument": {
+            "first": "real",
+            "second": "z",
+            "third": "100 2"
+          }
+        }
+      ],
+      "type": "FunctionCall"
+    },
+    "signatures": {
+      "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCo/GjVKS+3gAA55+kko41yINdOcCLQMSBQyuTTkKHE1mhu/TgOpivM0wLPsSga8hQMr3+v3aR0IF/vfCRf6SdiXmWx/jflmEXtnT6fkGcnV6dGNUpHWXSpwUIDt0N88jfnEqekx4S+KDCKg99sGEeHeT65fKS8lB0gjHMt9AOriwIDAQAB": "bJ0xnIhcDlPMmKYx7h8jjX8Q7PaSdqxRg7xq/zTM0vEKqJVDIN0JcT8Qj7jEX5Pwm2YOq+kSwEAxqlPzwoZoQNhe6FPyz6dbj9/LQ0rg79x4QD5ZrCawpcbbtJ/U5l1RPGvl06EdHeQc4YFlsIW4yywD1XlKtfJc7IJwes/iKrE="
+    }
+  }
+\end{Verbatim}
+
+Through this function call, the global variable \verb|use_code| henceforth it will be of type \verb|real| 
+(see section \ref{dynamic-type}).
+
+Server response:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+  {
+    "statusCode": 200,
+    "statusMessage": "Success",
+    "type": "SuccessDataResponse"
+  }
+\end{Verbatim}
+
+\paragraph{accept call}
+
+Request to the server to make the \verb|accept| function call:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+  {
+    "message": {
+      "contractInstanceId": "4cc1f3c7-5cb4-4528-b15a-8e5cacf5b18a",
+      "functionName": "accept",
+      "arguments": [
+        {
+          "argument": {
+            "first": "asset",
+            "second": "y",
+            "third": {
+              "ownershipId": "1ce080e5-8c81-48d1-b732-006fa1cc4e2e",
+              "address": "f3hVW1Amltnqe3KvOT00eT7AU23FAUKdgmCluZB+nss=",
+              "unlockScript": "PUSH str CJ3CdFnd6QiRoNaxxJN6sEYkmhKsSKi0SP5YXiSGhygZs+EMyE2bPrI+hRL4PSA0vLh0X6PNpDhTaPxx4kc1LEk9su8+6kkDvi3xpLG9bDoPjss+LEPXUjPTcGVB/3jITb8W+GmX1kDYhGHKtSuhvxBjTwwbtok4gRDD1BcMX/o=\nPUSH str MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDErzzgD2ZslZxciFAiX3/ot7lrkZDw4148jFZrsDZPE6CVs9xXFSHGgy/mFvIFLXhnChO6Nyd2be3lbgeavLMCMVUiTStXr117Km17keWpb3sItkKKsLFBOcIIU8XXowI/OhzQN2XPZYESHgjdQ5vwEj2YyueiS7WKP94YWz/pswIDAQAB\n"
+            }
+          }
+        }
+      ],
+      "type": "FunctionCall"
+    },
+    "signatures": {
+      "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDErzzgD2ZslZxciFAiX3/ot7lrkZDw4148jFZrsDZPE6CVs9xXFSHGgy/mFvIFLXhnChO6Nyd2be3lbgeavLMCMVUiTStXr117Km17keWpb3sItkKKsLFBOcIIU8XXowI/OhzQN2XPZYESHgjdQ5vwEj2YyueiS7WKP94YWz/pswIDAQAB": "wL3r61IgwBGau7S7V967ZSA8B0lLiOMi0qai1YGQVFXnCTvL9WDVMGTwp7XXAQ77f23Hw5y6Ho5SFUMRRfaTLguIJBx9twRSUfpTP4bh3K4RB2yg32rkOP16G2vIfEirTT+v2wmp1f10pY+dY/QdMzua7EFdQNmL7PhJnA96CpM="
+    }
+  }
+\end{Verbatim}
+
+Server response:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+  {
+    "statusCode": 200,
+    "statusMessage": "Success",
+    "type": "SuccessDataResponse"
+  }
+\end{Verbatim}
+
+\paragraph{Version 1 - end call}
+
+Request to the server to make the \verb|end| function call:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+  {
+    "message": {
+      "contractInstanceId": "4cc1f3c7-5cb4-4528-b15a-8e5cacf5b18a",
+      "functionName": "end",
+      "arguments": [],
+      "type": "FunctionCall"
+    },
+    "signatures": {
+      "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDErzzgD2ZslZxciFAiX3/ot7lrkZDw4148jFZrsDZPE6CVs9xXFSHGgy/mFvIFLXhnChO6Nyd2be3lbgeavLMCMVUiTStXr117Km17keWpb3sItkKKsLFBOcIIU8XXowI/OhzQN2XPZYESHgjdQ5vwEj2YyueiS7WKP94YWz/pswIDAQAB": "hU6i0eGRNcZB+ZCxeLCPBM31iai412yczQ4/Td+roq9jnBU7agWfuOyVl/6fCKdTZcKkxASJs1tCpe4bLlpUHt01lFlGM8n9+sPHXl+1/jXMngmmPhuNUPrtsD7PGeFtuC3JJkcqTq3WkyWz6nVdn55bzX6BxleN/I6MPgmDroc="
+    }
+  }
+\end{Verbatim}
+
+Server response:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+  {
+    "statusCode": 200,
+    "statusMessage": "Success",
+    "type": "SuccessDataResponse"
+  }
+\end{Verbatim}
+
+\newpage
+\paragraph{Version 1 - Trigger of the event and non-execution of the obligation}
+
+This situation occurs when the customer, who has used the service, has returned the bicycle before the 
+end of use of the service.
+
+From the server logs it can be seen that the event was triggered and the code encoding the obligation was 
+not executed:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+  EventTrigger: A new scheduled request has been triggered => EventTriggerSchedulingRequest{
+    request=CreateEventRequest{
+      obligationFunctionName='obligation_1', 
+      time=1680036610
+    }, 
+    contractId='622ad60b-ab1f-4c2c-9f64-1307c046b55d', 
+    contractInstanceId='4cc1f3c7-5cb4-4528-b15a-8e5cacf5b18a'
+  }
+  EventTrigger: Enqueuing the request...
+  EventTrigger: Notifying the virtual machine...
+  EventTrigger: Virtual machine notified
+  EventTrigger: Removing the request from EventTriggerHandler...
+  VirtualMachine: Ready to dequeue a value...
+  VirtualMachine: Request received => Pair{
+    first=null, 
+    second=EventTriggerSchedulingRequest{
+      request=CreateEventRequest{
+        obligationFunctionName='obligation_1', 
+        time=1680036610
+      }, 
+      contractId='622ad60b-ab1f-4c2c-9f64-1307c046b55d', 
+      contractInstanceId='4cc1f3c7-5cb4-4528-b15a-8e5cacf5b18a'
+    }
+  }
+  VirtualMachine: Just received a trigger request
+  VirtualMachine: This function cannot be called in the current state
+  VirtualMachine: Obligation function name => obligation_1
+  VirtualMachine: Current state => DfaState{name='End'}
+  VirtualMachine: Next state => null
+  VirtualMachine: Ready to dequeue a value...
+  VirtualMachine: I'm waiting...
+\end{Verbatim}
+
+From line 20 to line 22 it can be seen that the obligation has not been performed because the current 
+state of the contract instance is \verb|@End|. Instead, the state in which the obligation should be 
+executed is \verb|@Using|. For this reason it was not possible to fulfill the obligation.
+
+\newpage
+\paragraph{Version 2 - Event trigger and execution of the obligation}
+
+This situation occurs when the customer, who has used the service, has not returned the bicycle before the 
+end of use of the service.
+
+From the server logs it can be seen that the event was triggered, the code encoding the obligation was 
+loaded and executed:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+  EventTrigger: A new scheduled request has been triggered => EventTriggerSchedulingRequest{
+    request=CreateEventRequest{
+      obligationFunctionName='obligation_1', 
+      time=1680037664
+    }, 
+    contractId='51d909ae-45f8-47d2-90de-40699c8a8a3d', 
+    contractInstanceId='1a7c6469-b4a3-4c67-8a43-ca60514345f6'
+  }
+  EventTrigger: Enqueuing the request...
+  EventTrigger: Notifying the virtual machine...
+  EventTrigger: Virtual machine notified
+  EventTrigger: Removing the request from EventTriggerHandler...
+  VirtualMachine: Ready to dequeue a value...
+  VirtualMachine: Request received => Pair{
+    first=null, 
+    second=EventTriggerSchedulingRequest{
+      request=CreateEventRequest{
+        obligationFunctionName='obligation_1', 
+        time=1680037664
+      }, 
+      contractId='51d909ae-45f8-47d2-90de-40699c8a8a3d', 
+      contractInstanceId='1a7c6469-b4a3-4c67-8a43-ca60514345f6'
+    }
+  }
+  VirtualMachine: Just received a trigger request
+  loadObligationFunction: Loading the obligation function...
+  loadObligationFunction: Obligation function loaded
+  VirtualMachine: Function
+  start:
+  PUSH real 100 2
+  GLOAD wallet
+  GLOAD Lender
+  WITHDRAW wallet
+  end:
+  HALT
+
+  loadBytecode: Loading the bytecode...
+  loadBytecode: Bytecode loaded
+
+  VirtualMachine: loadBytecode
+  start:
+  PUSH real 100 2
+  GLOAD wallet
+  GLOAD Lender
+  WITHDRAW wallet
+  end:
+  HALT
+
+  LegalContractVirtualMachine: execute => Final state of the execution below
+  LegalContractVirtualMachine: execute => The stack is empty
+
+  LegalContractVirtualMachine: execute => GlobalSpace
+  rentingTime: 100, changed: false
+  wallet: 11.00 stipula_coin_asd345, changed: true
+  cost: 12.00, changed: false
+  Borrower: f3hVW1Amltnqe3KvOT00eT7AU23FAUKdgmCluZB+nss= MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDErzzgD2ZslZxciFAiX3/ot7lrkZDw4148jFZrsDZPE6CVs9xXFSHGgy/mFvIFLXhnChO6Nyd2be3lbgeavLMCMVUiTStXr117Km17keWpb3sItkKKsLFBOcIIU8XXowI/OhzQN2XPZYESHgjdQ5vwEj2YyueiS7WKP94YWz/pswIDAQAB, changed: false
+  use_code: 1.00, changed: false
+  Lender: ubL35Am7TimL5R4oMwm2OxgAYA3XT3BeeDE56oxqdLc= MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCo/GjVKS+3gAA55+kko41yINdOcCLQMSBQyuTTkKHE1mhu/TgOpivM0wLPsSga8hQMr3+v3aR0IF/vfCRf6SdiXmWx/jflmEXtnT6fkGcnV6dGNUpHWXSpwUIDt0N88jfnEqekx4S+KDCKg99sGEeHeT65fKS8lB0gjHMt9AOriwIDAQAB, changed: false
+
+  LegalContractVirtualMachine: execute => The argument space is empty
+
+  LegalContractVirtualMachine: execute => The data space is empty
+
+  Global state of the execution
+  running -> false
+  executionPointer -> 6
+  executionPointer (with offset) -> 67
+  length of the program -> 7
+  length of the program (with offset) -> 68
+  VirtualMachine: Updating the global store...
+  VirtualMachine: Global store updated
+  VirtualMachine: Ready to dequeue a value...
+  VirtualMachine: I'm waiting...
+\end{Verbatim}
+
+In this case, however, it was possible to execute the code that encodes the obligation because the current 
+state of the contract instance is \verb|@Using| and coincides with the state in which the obligation is to 
+be performed.
+
+\newpage
+\paragraph{Version 2 - end call}
+
+Here we show the example in which the user tries to call the \verb|end| function, to notify the company 
+of the end of using the service. However, the call to this function took place after the maximum time 
+established by the contract, and therefore the penalty foreseen by the contract was activated.
+
+Request to the server to make the \verb|end| function call:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+  {
+    "message": {
+      "contractInstanceId": "1a7c6469-b4a3-4c67-8a43-ca60514345f6",
+      "functionName": "end",
+      "arguments": [],
+      "type": "FunctionCall"
+    },
+    "signatures": {
+      "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDErzzgD2ZslZxciFAiX3/ot7lrkZDw4148jFZrsDZPE6CVs9xXFSHGgy/mFvIFLXhnChO6Nyd2be3lbgeavLMCMVUiTStXr117Km17keWpb3sItkKKsLFBOcIIU8XXowI/OhzQN2XPZYESHgjdQ5vwEj2YyueiS7WKP94YWz/pswIDAQAB": "Ow8gS8d5SChD3E5CgtsnFHTRWskdeWW2IsTLQJk92mS40LfVtPcxuDiIbzL7xWwtUTMFxza+/TSxU+rMsVvMqQLLyUQ4e6UrLO25+Nr7p5x013JGIaxc18G5kqEuS4iEyiqN1479E4ElLROE+VpI5DBAKMegw0h9m5cbtHFN/fA="
+    }
+  }
+\end{Verbatim}
+
+Server response:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+  {
+    "data": "This function cannot be called in the current state",
+    "statusCode": 404,
+    "statusMessage": "Success",
+    "type": "SuccessDataResponse"
+  }
+\end{Verbatim}
+
+\paragraph{Single-use-seals by Lender}
+
+Server request to get \verb|Lender|'s single-use-seals:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+  {
+    "message": {
+      "address": "ubL35Am7TimL5R4oMwm2OxgAYA3XT3BeeDE56oxqdLc=",
+      "type": "GetOwnershipsByAddress"
+    },
+    "signatures": {
+      "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCo/GjVKS+3gAA55+kko41yINdOcCLQMSBQyuTTkKHE1mhu/TgOpivM0wLPsSga8hQMr3+v3aR0IF/vfCRf6SdiXmWx/jflmEXtnT6fkGcnV6dGNUpHWXSpwUIDt0N88jfnEqekx4S+KDCKg99sGEeHeT65fKS8lB0gjHMt9AOriwIDAQAB": "MomZTc63z7PfH35c1dL4tjXebcsW+0Zxl0nP1NQdcUFws98DX+bMWI7L0C6IO5lxvkYve4zdio1Crn97FXvngK4aVfiEZEnHOJ0tstq7uQYGErM3DDAABqPq8HH5yoKnLST2LWpO0oD8G/VXvIE6qMT5D34W1Ci0q4uh+7y3EcY="
+    }
+  }
+\end{Verbatim}
+
+Server response:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+  {
+    "data": "[
+        Ownership{
+          id='205cd89a-c078-4f1a-8dd7-dae683c4f3a8', 
+          singleUseSeal=SingleUseSeal{
+            assetId='stipula_coin_asd345', 
+            amount=RealType{
+              value=100, 
+              decimals=2
+            }, 
+            lockScript='DUP\nSHA256\nPUSH str ubL35Am7TimL5R4oMwm2OxgAYA3XT3BeeDE56oxqdLc=\nEQUAL\nCHECKSIG\nHALT\n'
+          }, 
+          unlockScript='', 
+          contractInstanceId=''
+        }
+      ]",
+    "statusCode": 200,
+    "statusMessage": "Success",
+    "type": "SuccessDataResponse"
+  }
+\end{Verbatim}
+
+It is possible to notice that the \verb|Lender| has received a new single-use-seal from the agreement 
+instance.
+
+\paragraph{Single-use-seals by Borrower}
+
+Server request to get \verb|Borrower|'s single-use-seals:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+  {
+    "message": {
+      "address": "f3hVW1Amltnqe3KvOT00eT7AU23FAUKdgmCluZB+nss=",
+      "type": "GetOwnershipsByAddress"
+    },
+    "signatures": {
+      "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDErzzgD2ZslZxciFAiX3/ot7lrkZDw4148jFZrsDZPE6CVs9xXFSHGgy/mFvIFLXhnChO6Nyd2be3lbgeavLMCMVUiTStXr117Km17keWpb3sItkKKsLFBOcIIU8XXowI/OhzQN2XPZYESHgjdQ5vwEj2YyueiS7WKP94YWz/pswIDAQAB": "hSNodnUyusffNlv+KNq4605pFvqh91pVspFhTgbmWccE/LKM6h4bedpvTgMHoVDezvA7v2XTzmLG5eL3lOeA6I2xJMH32DcV60IPSoh61oVHnwPQcQHY039D4y5VSJ0GMQJKIcTEq3fqIdabg7261xUaegHUnXrcyynh9GpMJxk="
+    }
+  }
+\end{Verbatim}
+
+\newpage
+Server response:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+  {
+    "data": "[
+        Ownership{
+          id='1ce080e5-8c81-48d1-b732-006fa1cc4e2e', 
+          singleUseSeal=SingleUseSeal{
+            assetId='stipula_coin_asd345', 
+            amount=RealType{
+              value=1200, 
+              decimals=2
+            }, 
+            lockScript='DUP\nSHA256\nPUSH str f3hVW1Amltnqe3KvOT00eT7AU23FAUKdgmCluZB+nss=\nEQUAL\nCHECKSIG\nHALT\n'
+          }, 
+          unlockScript='PUSH str CJ3CdFnd6QiRoNaxxJN6sEYkmhKsSKi0SP5YXiSGhygZs+EMyE2bPrI+hRL4PSA0vLh0X6PNpDhTaPxx4kc1LEk9su8+6kkDvi3xpLG9bDoPjss+LEPXUjPTcGVB/3jITb8W+GmX1kDYhGHKtSuhvxBjTwwbtok4gRDD1BcMX/o=\nPUSH str MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDErzzgD2ZslZxciFAiX3/ot7lrkZDw4148jFZrsDZPE6CVs9xXFSHGgy/mFvIFLXhnChO6Nyd2be3lbgeavLMCMVUiTStXr117Km17keWpb3sItkKKsLFBOcIIU8XXowI/OhzQN2XPZYESHgjdQ5vwEj2YyueiS7WKP94YWz/pswIDAQAB\n', 
+          contractInstanceId='4cc1f3c7-5cb4-4528-b15a-8e5cacf5b18a'
+        }
+      ]",
+    "statusCode": 200,
+    "statusMessage": "Error",
+    "type": "ErrorDataResponse"
+  }
+\end{Verbatim}
+
+It can be seen that the single-use-seal has been spent and is demonstrated by the \verb|unlockScript| 
+field.

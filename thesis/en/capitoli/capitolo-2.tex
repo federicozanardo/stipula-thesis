@@ -1,0 +1,404 @@
+% !TEX encoding = UTF-8
+% !TEX TS-program = pdflatex
+% !TEX root = ../tesi.tex
+
+%**************************************************************
+\chapter{Stipula}
+\label{cap:stipula}
+%**************************************************************.
+
+This chapter introduces all the fundamental concepts of the \textit{Stipula} language. Its functionality 
+and the main characteristics of the language are analyzed.
+
+%**************************************************************
+
+\section{Context}
+
+Ethereum's introduction of smart contracts brought about the \textit{Code is Law} principle 
+\autocite{article:code-is-law-principle}, which relies on software code to provide a clear definition and 
+automatic execution of transactions between parties who do not trust each other. In case of disputes, the 
+code of the contract is publicly available and takes precedence. This principle is based on the idea that 
+trust is built into transparent intermediary algorithms of the blockchain. As a result, governments 
+recognize the legal value of smart contracts and programs operating over distributed ledgers.
+
+Code-Driven Law \autocite{site:code-driven-law} is a growing trend that uses software to represent or enact 
+legislation or regulation. Technologies like Rules as Code \autocite{site:rulse-as-code}, Catala 
+\autocite{site:catala}, and Akoma Ntoso \autocite{site:akoma-ntoso} are used to create a machine-consumable 
+version of some types of rules issued by governments and public administrations, such as tax offices, 
+student grant provisions, or social security agencies. This helps to identify potential inconsistencies in 
+regulations, reduce the complexity and ambiguity of legal texts, and support the automation of legal 
+decisions. Instead of relying on ex-post enforcement by third parties like courts and police, the rules 
+hardwired into code are enforced ex-ante, making it very difficult for people to breach them in the first 
+place \autocite{article:from-code-is-law-to-law-is-code}.
+
+However, transposing legal rules into technical rules is a delicate process since the inherent ambiguity of 
+the legal system is necessary to ensure a proper application of the law on a case-by-case basis. The 
+process of translating parties' intentions, promises, actions, powers, and prohibitions into computer code 
+is problematic and does not solve the problem but moves it into another dimension. Additionally, 
+code-driven law is based on the automation of compliance with pre-set rules, leaving no room for 
+disagreement about the right way to interpret the norms. This potentially reduces the capability of 
+individual human beings to invoke legal remedies.
+
+For example, the Code is Law principle of Ethereum declined with the famous TheDAO attack 
+\autocite{article:dao-attack}. From the Code is Law perspective, a problem in the source code leading to 
+unexpected behavior of the smart contract is a feature of the code and not an error. However, the first 
+hard fork of the Ethereum blockchain showed that this principle is not practical when large sums of money 
+are at stake. Furthermore, blockchain technology does not hardwire trust into algorithms but reassigns 
+trust to a series of actors who implement, manage and enable the functioning of this technological platform.
+
+\section{Legal calculi}
+
+Legal contracts are defined as agreements that create a legally binding relationship or have legal effects. 
+While parties are free to express their agreement using any language or medium, including a programming 
+language, a contract only produces the intended effects if it is legally valid. This raises both legal and 
+technological issues when it comes to software-based contracts.
+
+Different kinds of software-based solutions can be valuable in the different phases of a legal contract's 
+lifecycle, which goes through negotiation, storage/notarizing, performance, enforcement and monitoring, 
+modification, and dispute resolution. Therefore, several projects are being developed for defining 
+code-driven legal contracts. The main problem is defining a suitable programming language to write legal 
+contracts, which should be easy-to-use and understand for legal practitioners while still being expressive 
+and precise.
+
+The \textit{Stipula} programming language is proposed as a solution, which is an intermediate 
+domain-specific language. The language's basic primitives are designed to map the building blocks of legal 
+contracts into template programs and design patterns. The definition of \textit{Stipula} is influenced by 
+the theory of concurrent systems, and a legal contract is interpreted as an interaction protocol. 
+Additionally, the language definition is \textit{implementation-agnostic} and can be either implemented as 
+a centralized platform or run on top of a distributed system like a blockchain. A prototype centralized 
+implementation of \textit{Stipula} as a Java application is available 
+\autocite{site:stipula-java-centralized}.
+
+While only a concrete implementation can address specific issues, studying the theory of a domain-specific 
+legal calculus (\cite*{article:legal-calculi} and 
+\cite{article:legally-enforceable-smart-contract-languages}) is a first step in shedding some light on the 
+digitization of legal texts.
+
+\section{Code-driven normativity}
+
+A preliminary interdisciplinary study found that most actual legal contracts are composed of several basic 
+elements (see table \ref{table:stipula-features}). These elements include the \textbf{meeting of the minds}, 
+which refers to the agreement of the contract's parties to its terms, and marks the moment when legal 
+effects take place. They also include \textbf{permissions}, \textbf{prohibitions}, and \textbf{obligation} 
+clauses that may change dynamically, such as the right to use a product until a certain date. In 
+particular, permissions correspond to the possibility of performing an action at a certain stage, 
+prohibitions correspond to the interdiction of doing an action, while obligations are recast into 
+commitments that are checked at a specific time limit and issue a corresponding penalty if the obligation 
+has not been met. Other elements include the \textbf{transfer of assets or currency}, the possibility of 
+\textbf{external conditions or data} affecting the contract, and the ability to 
+\textbf{activate judicial enforcements} in the case of dispute resolution.
+
+\begin{ThreePartTable}
+	\setTableNoteFont{\footnotesize}
+  \begin{longtable}{|c|c|}
+    \caption{Correspondence between legal elements and \textit{Stipula} features 
+    \autocite{article:stipula-legal-calculi}.}
+    \label{table:stipula-features}\\
+    \noalign{\global\arrayrulewidth0.7pt}
+    \hline
+    \textbf{Legal contracts} & \textbf{Stipula contracts} \\ [5pt]
+    
+    \noalign{\global\arrayrulewidth0.7pt}
+    \hline
+    
+    Meeting of the minds                            & Agreement primitive \\
+    \hline
+    
+    Permissions, prohibitions                       & State-aware programming \\
+    \hline
+    
+    Obligations                                     & Event primitive \\
+    \hline
+
+    Currency and tokens                             & Asset-aware programming \\
+    \hline
+
+    Openness to the environment                     & Intermediary pattern \\
+    \hline
+    
+    Judicial enforcement and exceptional behaviours & Authority pattern \\
+    
+    \noalign{\global\arrayrulewidth0.7pt}
+    \hline
+  \end{longtable}
+\end{ThreePartTable}
+
+The \textit{Stipula} language was designed to easily map these basic elements of legal contracts into 
+template programs and design patterns. The \textbf{agreement} construct directly encodes the meeting of 
+the minds, while normative elements such as permissions, prohibitions, and obligations are expressed 
+using a \textbf{state-aware programming style} inspired by the state machine pattern used in smart 
+contracts, such as \textit{Solidity} \autocite{site:solidity-state-machine} and \textit{Obsidian} 
+\autocite{site:obsidian}. 
+
+Asset manipulation is also syntactically distinguished from standard operations to emphasize that assets 
+\textit{cannot be destroyed or forged}, but \textit{only transferred}. Assets are a specific value type and 
+\textit{Stipula} wants to promote an \textbf{asset-aware programming} 
+(\cite{article:writing-safe-smart-contracts-in-flint}, 
+\cite{article:resource-aware-session-types-for-digital-contracts}, \cite{article:move-language}). Clauses 
+dependent on external data are implemented by an intermediary party responsible for retrieving data from 
+an external source agreed upon in the contract.
+
+Dispute resolution, judicial enforcement of legal clauses, and exceptional behaviors are also included in 
+the contract by assigning legal responsibility to an intermediary party that interfaces with a court or an 
+\textit{Online Dispute Resolutions platform}, as \cite{site:eu-odr-platform}. This approach differs from 
+relying on Oracles web services, which cannot be legally held accountable.
+
+\section{Building blocks of Stipula}
+
+It is worth to notice that a \textit{Stipula} contract begins with the keyword \verb|stipula| and define 
+\textit{assets} and \textit{fields} that are used therein. We also observe that \textit{Stipula} is 
+\textbf{untyped}, to keep a simple syntax. However, a \textit{type inference system} that allows one to 
+derive types has been designed.
+
+\subsection{Examples of contracts in Stipula}
+
+This short section introduces two examples of contracts, written in \textit{Stipula}, to illustrate the 
+structure and main elements that make up a contract in \textit{Stipula}. In the following sections, 
+starting from the bike rental contract, all the fundamental blocks of a \textit{Stipula} contract will be 
+illustrated.
+
+\subsubsection{Asset swap}
+
+In this example, there are two actors, Alice and Bob, who want to trade two assets. For simplicity, the 
+price variation that these assets may have over time is not taken into consideration, the exchange rate of 
+these two assets is fixed by the parties to the contract when a new instance of the contract is made.
+
+The complete code of the contract written in \textit{Stipula} is the following:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,tabsize=2]
+  stipula SwapAsset {
+    asset assetA:stipula_assetA_ed8i9wk, assetB:stipula_assetB_pl1n5cc
+    field amountAssetA, amountAssetB
+    init Inactive
+
+    agreement (Alice, Bob)(amountAssetA, amountAssetB) {
+        Alice, Bob: amountAssetA, amountAssetB
+    } ==> @Inactive
+
+    @Inactive Alice : depositAssetA()[y]
+        (y == amountAssetA) {
+            y -o assetA;
+            _
+    } ==> @Swap
+
+    @Swap Bob : depositAssetBAndSwap()[y]
+        (y == amountAssetB) {
+            y -o assetB
+            assetB -o Alice
+            assetA -o Bob;
+            _
+    } ==> @End
+  }
+\end{Verbatim}
+
+\subsubsection{Bike rental}
+\label{bike-rental-example-definition}
+
+The example that will be presented was taken from one of the papers describing the design of 
+\textit{Stipula} (\cite{article:pacta-sunt-servanda}, \cite{article:stipula-dsl} and 
+\cite{article:stipula-legal-calculi}).There are two actors, one represents a company that rents bicycles 
+for a defined amount of time and for a certain amount of money, and the other represents a customer of that 
+company. When the customer wants to use the service offered by the company, both decide to create a new 
+instance of the contract (\textit{agreement} phase). The company will provide a certain code which will 
+allow the user to unlock the bicycle. When the user has provided the amount of money needed to use the 
+service, the user will receive the code from the company and the money will be deposited into the 
+contract. Furthermore, the obligation will be set that if the user does not stop using the service offered 
+by the company within a certain period of time, the money will be sent to the company and the user will 
+be notified of the term of using the service.
+
+The complete code of the contract written in \textit{Stipula} is the following:
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,tabsize=2]
+  stipula BikeRental {
+    asset wallet:stipula_coin_asd345
+    field cost, rentingTime, use_code
+    init Inactive
+
+    agreement (Lender, Borrower)(cost, rentingTime){
+        Lender, Borrower: cost, rentingTime
+    } ==> @Inactive
+
+    @Inactive Lender : offer(z)[] {
+        z -> use_code;
+        _
+    } ==> @Proposal
+
+    @Proposal Borrower : accept()[y]
+        (y == cost) {
+            y -o wallet;
+            use_code -> Borrower;
+            now + rentingTime >>
+                @Using {
+                    "End_Reached" -> Borrower
+                    wallet -o Lender
+                } ==> @End
+    } ==> @Using
+
+    @Using Borrower : end()[] {
+        wallet -o Lender;
+        _
+    } ==> @End
+  }
+\end{Verbatim}
+
+\subsection{Agreement}
+
+One key aspect of a legal contract is the agreement between parties, where they come to a mutual 
+understanding and give consent to the terms of the contract (\textit{meeting of minds}). \textit{Stipula} 
+provides a specific primitive, called \textbf{agreement}, to indicate when parties have reached consensus 
+on the contractual arrangement they wish to establish. As an example, consider a contract regulating a 
+bike rental service. The following \textit{Stipula} code implements the agreement phase:
+
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=6,breaklines=true,breakanywhere=true,tabsize=2]
+  agreement (Lender, Borrower) {
+    Lender, Borrower: rentingTime, cost 
+  } ==> @Inactive
+\end{Verbatim}
+
+The code is meeting a \verb|Lender| and a \verb|Borrower| to agree on both the \verb|rentingTime| and on 
+its \verb|cost|. After the agreement the contract starts and it goes into a state \verb|@Inactive| that 
+expresses that no rent will occur until the payment. The contract can also have a variation which involves 
+an \textbf{authority} responsible for monitoring contextual constraints, such as obligations related to 
+storage and care, or the proper use of goods. This \verb|Authority| is also responsible for managing 
+litigations and dispute resolution. In this case, the agreement function would be:
+
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=6,breaklines=true,breakanywhere=true,tabsize=2]
+  agreement (Lender, Borrower, Authority) {
+    Lender, Borrower: rentingTime, cost 
+  } ==> @Inactive
+\end{Verbatim}
+
+This code express the fact that only the \verb|Lender| and the \verb|Borrower| agree on both 
+\verb|rentingTime| and \verb|cost|, while the \verb|Authority|, which also engage in the meeting of minds, 
+is the pointer to a \textit{third party} that will \textbf{supervise} \verb|Lender| and \verb|Borrower| 
+behaviours.
+
+\subsection{Permissions and prohibitions}
+
+Legal contracts have a unique characteristic where the set of normative elements, such as 
+\textbf{permissions} and \textbf{prohibitions}, often change based on actions taken or not taken. To 
+account for these changes, \textit{Stipula} adopts a \textit{state-machine programming approach}, which is 
+a widely supported pattern in programming languages using ad-hoc libraries or modules. For example, in a 
+bike rental contract, once the \verb|Lender| and \verb|Borrower| agree on the rental period and cost, the 
+\verb|Lender| is not allowed to prevent the \verb|Borrower| from paying for the service and using the bike. 
+\textit{Stipula} implements this functionality by enabling the contract to proactively monitor changes in 
+the bike's status, such as storing a temporary access code to prevent the \verb|Lender| from revoking the 
+rental. The following code defines the function \verb|offer| that can be invoked by \verb|Lender| when the 
+contract is in state \verb|@Inactive| to send an access code to be used by the \verb|Borrower|:
+
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=10,breaklines=true,breakanywhere=true,tabsize=2]
+  @Inactive Lender : offer(x) { 
+    x -> code
+  } ==> @Payment
+\end{Verbatim}
+
+Naturally, the \verb|Borrower| is not informed of the value of the \verb|code| prior to payment for the 
+service. In other words, the preceding excerpt authorizes the \verb|Lender| to invoke \verb|offer| 
+function in the \verb|@Inactive| state. If no further function is defined in \verb|@Inactive|, the contract 
+will prohibit other parties from taking any action at this stage. Once the code is received, the contract 
+will move to the \verb|@Payment| state, where presumably the \verb|Borrower| will pay (in fact, the 
+\verb|Borrower| is allowed to pay) for the rental.
+
+It's worth noting that the aforementioned code also emphasizes that the \verb|Lender| trusts the contract 
+to act as an intermediary that can store relevant information (such as assets). Indeed, \verb|x -> code| 
+stores the value sent by the \verb|Lender| in a contract field called \verb|code|, which cannot be accessed 
+outside the contract.
+
+\subsection{Assets}
+
+Another key characteristic of legal contracts is the handling of \textbf{assets}, such as currency for 
+\textit{payments} and \textit{escrows}, as well as tokens that can represent securities and provide digital 
+ownership of physical goods. In the example of the bike rental, instead of using a simple numeric code, a 
+more innovative approach could involve a unique token that grants access to the bike's smart lock. 
+Traditionally, the \verb|Borrower| pays the \verb|Lender| with a credit card before using the bike, and the 
+contract only specifies the transaction through a normative clause, with no guarantee of its occurrence (in 
+case of dispute, one party has to go to court). However, \textit{Stipula} enables digital legal contracts 
+that automatically handle asset transfers, thus eliminating intermediaries even in payments. Moreover, 
+\textit{Stipula} allows legal contracts to temporarily retain assets and decide to redistribute them when 
+certain conditions are met. Therefore, the language treats assets as first-class values and provides 
+specific operations for their management. For example, the following function is defining the payment of 
+the rental by \verb|Borrower|, which sends an asset \verb|y| (the argument is in square brackets) to the 
+contract:
+
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=15,breaklines=true,breakanywhere=true,tabsize=2]
+  @Payment Borrower : accept[y] 
+    (y == cost) {
+      y -o wallet
+      use_code -> Borrower 
+  } ==> @Using
+\end{Verbatim}
+
+The function call has a precondition (line 2) that ensures the correctness of the fee paid by the 
+\verb|Borrower| before executing the operation at line 3, which transfers ownership of the asset \verb|y| 
+to the contract and stores it in the asset field \verb|wallet|. By explicitly marking asset movements with 
+the ad-hoc operator \verb|-o| and separating it from \verb|->|, the language promotes a safer programming 
+discipline that \textit{reduces the risk of double spending}, \textit{accidental loss}, or 
+\textit{locked-in} assets. Notably, the contract does not immediately forward the payment to the 
+\verb|Lender|; instead, it retains the payment until the rental period terminates to prevent access or use 
+by either the \verb|Borrower| or the \verb|Lender| during disputes. After the fee has been paid, the 
+\verb|Borrower| receives the access code to the bike, and the contract enters the \verb|@Using| state.
+
+\subsection{Obligations}
+
+\textit{Stipula} embodies another notable aspect of legal contracts: \textbf{obligations} that prescribe 
+certain actions to be performed within a specified \textit{timeframe}. These obligations are converted into 
+commitments in \textit{Stipula} and are evaluated when the time limit is reached, with the 
+\textit{event primitive} serving as the corresponding programming abstraction. For example, the foregoing 
+\verb|pay| function may be refined by issuing an event that terminates the renting service when the time 
+limit is reached. The code becomes:
+
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=15,breaklines=true,breakanywhere=true,tabsize=2]
+  @Payment Borrower : accept[y] 
+    (y == cost) {
+      y -o wallet
+      use_code -> Borrower
+      now + rentingTime >>
+        @Using {
+          "End_Reached" -> Borrower 
+          wallet -o Lender
+        } ==> @End 
+  } ==> @Using
+\end{Verbatim}
+
+The deadline for returning the bike is denoted by \verb|now + rentingTime|, and if the bike has not been 
+returned by then (i.e., the contract remains in the \verb|@Using| state), a message requesting the bike's 
+return is sent to the \verb|Borrower| (line 7), and the fee stored in the wallet is transferred to the 
+\verb|Lender| (line 8). It should be noted that \textit{events are not triggered by any party}; they are 
+\textbf{automatically executed} when the time condition is met. Since the statements within an event's body 
+will be executed in the future, it is assumed for simplicity that the event's body is outside the scope of 
+function parameters, both for assets and non-assets. 
+
+\subsection{Third party enforcements}
+
+\textit{Stipula} offers a straightforward approach for modelling disputes without the need for additional 
+features, which resembles the actions of a court. When the software is unable to verify contract 
+violations, such as bike damage or misuse, or the rental of a defective bike, a trusted third party, the 
+\verb|Authority|, must be involved in supervising the dispute and providing a resolution mechanism. The 
+following code demonstrates how off-chain monitoring and enforcement mechanisms are encoded in 
+\textit{Stipula} through an \verb|Authority|, which must be included in the agreement. The following code 
+is just an example to show the functionality \textit{third party enforcements} and external to the 
+\verb|BikeRental| code: 
+
+\begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=1,breaklines=true,breakanywhere=true,tabsize=2]
+  @Using Lender,Borrower : dispute(x) { 
+    x -> _
+  } ==> @Dispute
+
+  @Dispute Authority : verdict(x,y) 
+    (y >= 0 && y <= 1) {
+      x -> Lender, Borrower 
+      y * wallet -o wallet, Lender 
+      wallet -o Borrower
+  } ==> @End
+\end{Verbatim}
+
+The \verb|dispute| function can be triggered by either the \verb|Lender| or the \verb|Borrower| and 
+includes a string \verb|x| as the reason for initiating the dispute. After the reasons are communicated to 
+all parties (represented by \verb|_| instead of writing out three sending operations), the contract 
+transitions to the \verb|@Dispute| state, where the \verb|Authority| will analyze the issue and issue a 
+verdict. This is accomplished by allowing only the verdict function to be invoked in the \verb|@Dispute| 
+state. The verdict function takes two arguments: a string \verb|x| indicating the reasons for the decision 
+and a coefficient \verb|y| that represents the portion of the wallet that will be reimbursed to the 
+\verb|Lender|; the remaining portion will be given to the \verb|Borrower|. It is important to note that the 
+statement \verb|y * wallet -o wallet| represents \verb|Lender| receiving the \verb|y| portion of the wallet 
+(\verb|y| being in the range $[0...1]$) and the wallet being adjusted accordingly. The remaining portion is 
+sent to the \verb|Borrower| with the statement \verb|wallet -o Borrower|, which is shorthand for 
+\verb|1 * wallet -o wallet, Borrower|, and the wallet is then emptied.
