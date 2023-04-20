@@ -248,7 +248,7 @@ on the contractual arrangement they wish to establish. As an example, consider a
 bike rental service. The following \textit{Stipula} code implements the agreement phase:
 
 \begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=6,breaklines=true,breakanywhere=true,tabsize=2]
-  agreement (Lender, Borrower) {
+  agreement (Lender, Borrower)(cost, rentingTime) {
     Lender, Borrower: rentingTime, cost 
   } ==> @Inactive
 \end{Verbatim}
@@ -261,7 +261,7 @@ storage and care, or the proper use of goods. This \verb|Authority| is also resp
 litigations and dispute resolution. In this case, the agreement function would be:
 
 \begin{Verbatim}[numbers=left,xleftmargin=1cm,firstnumber=6,breaklines=true,breakanywhere=true,tabsize=2]
-  agreement (Lender, Borrower, Authority) {
+  agreement (Lender, Borrower, Authority)(cost, rentingTime) {
     Lender, Borrower: rentingTime, cost 
   } ==> @Inactive
 \end{Verbatim}
