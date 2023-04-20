@@ -6,4 +6,4 @@ Master's Degree Thesis in Computer Science, University of Padua, Academic Year 2
 
 🇬🇧: Thesis in PDF-A format: [thesis](https://github.com/federicozanardo/stipula-thesis/blob/master/thesis/en/tesi-pdfA.pdf)
 
-🇬🇧: Presentation: 
+🇬🇧: Presentation: [presentation](https://github.com/federicozanardo/stipula-thesis/blob/master/presentation/Presentation.pdf)
